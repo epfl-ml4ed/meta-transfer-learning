@@ -1,6 +1,5 @@
 # meta-transfer-learning
-This repository is the official implementation of the L@S 2022 Paper entitled "Meta Transfer Learning for Early Success Prediction in MOOCs".  
-Authors: Vinitra Swamy, Mirko Marras, Tanja Käser
+This repository is the official implementation of the L@S 2022 Paper entitled "Meta Transfer Learning for Early Success Prediction in MOOCs" written by [Vinitra Swamy](http://github.com/vinitra), Mirko Marras, Tanja Käser
 
 Experiments are located in `scripts/`. Models can be found in `models/`.
 
