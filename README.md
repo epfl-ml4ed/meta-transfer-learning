@@ -4,7 +4,7 @@ Authors: Vinitra Swamy, Mirko Marras, Tanja Käser
 
 Experiments are located in `scripts/`. Models can be found in `models/`.
 
-Extract relevant features sets (Bouroujeni, Marras, LalleConati, and ChenCui) through our lab's repository for our EDM 2021 on [benchmarks for feature predictive power](https://github.com/epfl-ml4ed/flipped-classroom).
+Extract relevant features sets (`BouroujeniEtAl`, `MarrasEtAl`, `LalleConati`, and `ChenCui`) through our lab's EDM 2021 contribution on [benchmarks for feature predictive power](https://github.com/epfl-ml4ed/flipped-classroom).
 
 ## Contributing 
 
@@ -25,8 +25,6 @@ In: Proceedings of the 2022 ACM Conference on Learning at Scale (L@S 2022).
 ```
 
 ## License
-This code is free software: you can redistribute it and/or modify it under the terms of the GNU Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
+This code is free software: you can redistribute it and/or modify it under the terms of the [MIT License](LICENSE).
 
-This software is distributed in the hope that it will be useful, but without any warranty; without even the implied warranty of merchantability or fitness for a particular purpose. See the GNU General Public License for details.
-
-You should have received a copy of the GNU General Public License along with this source code. If not, go the following link: http://www.gnu.org/licenses/.
+This software is distributed in the hope that it will be useful, but without any warranty; without even the implied warranty of merchantability or fitness for a particular purpose. See the [MIT License](LICENSE) for details.
