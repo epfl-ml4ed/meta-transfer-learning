@@ -10,9 +10,7 @@ Extract relevant features sets (`BouroujeniEtAl`, `MarrasEtAl`, `LalleConati`, a
 This code is provided for educational purposes and aims to facilitate reproduction of our results, and further research 
 in this direction. We have done our best to document, refactor, and test the code before publication.
 
-If you find any bugs or would like to contribute new models, training protocols, etc, please let us know.
-
-Please feel free to file issues and pull requests on the repo and we will address them as we can.
+If you find any bugs or would like to contribute new models, training protocols, etc, please let us know. Feel free to file issues and pull requests on the repo and we will address them as we can.
 
 ## Citations
 If you find this code useful in your work, please cite our paper:
