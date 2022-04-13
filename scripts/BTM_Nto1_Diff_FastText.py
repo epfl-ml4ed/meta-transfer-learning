@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# Experiment: Train on one course, predict on one course
-# RQs: 1
-# Code: BO 1-1 Same, BO 1-1 Diff
+# Experiment: Train on 20 courses, predict on one course
+# Meta Features: Google's Universal Sentence Encoder
+# RQs: 2
+# Code: BTM N-1 Diff
 # Author: vinitra
 
 
@@ -11,16 +12,27 @@ import numpy as np
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import normalize
+import tensorflow_hub as hub
 from rnn_models import *
+
 
 import time
 
+def load_meta_model(course_list):
+    from gensim.models import FastText
+    model = FastText(vector_size=30, window=3, min_count=1, sentences=course_list, epochs=15)
+    return model
+
+def meta_feature(course_name, meta_model):
+    encoded_course = meta_model.wv[[course_name]]
+    print(encoded_course.shape)
+    return np.array(encoded_course)
 
 def predict_on_transfer(best_model, exp_type, percentile, name):
     week_type = 'eq_week'
     feature_types = [ "lalle_conati", "boroujeni_et_al", "chen_cui", "marras_et_al"]
     courses = ['dsp_002', 'villesafricaines_001', 'structures_001', 'progfun_002', 'geomatique_003', 'venture_001']
-    metadata = pd.read_csv('metadata.csv')
+    metadata = pd.read_csv('new_data/metadata28.csv')
     
     path = '../data/result/easy-fail/'
     experiment_scores = pd.DataFrame(columns=[ 'experiment_type','acc', 'bac','prec','rec','f1', 'auc', 'feature_type', 'week_type', 'course', 'model_name','data_balance', 'timestamp', 'percentile'])    
@@ -46,7 +58,14 @@ def predict_on_transfer(best_model, exp_type, percentile, name):
             feature_list.append(feature_current)
         course_features = np.concatenate(feature_list, axis=2)
 
-        features = course_features
+        adding_meta_each_week = np.repeat(meta_feature(course, meta_model)[:, np.newaxis, :], course_features.shape[1], axis=1).reshape((course_features.shape[1], 30))
+        adding_meta_each_week = np.repeat(adding_meta_each_week[np.newaxis, :, :], course_features.shape[0], axis=0)
+        meta_features = np.concatenate([adding_meta_each_week, course_features], axis=2)
+
+        if exp_type == 'baseline':
+            features = course_features
+        else:
+            features = meta_features
 
         scores1 = evaluate(best_model, features, labels, week_type, feature_types, course, percentile, current_timestamp, y_pred=None, model_name=name)
         scores1['experiment_type'] = exp_type
@@ -58,16 +77,14 @@ def predict_on_transfer(best_model, exp_type, percentile, name):
 
 rnn_mode = True
 path = '../data/result/easy-fail/'
+exp_type = 'fasttext-meta'
 week_type = 'eq_week'
 feature_types = [ "lalle_conati", "boroujeni_et_al", "chen_cui", "marras_et_al"]
-courses = ['venture_001']
-# transfer courses - ['dsp_002', 'villesafricaines_001', 'structures_001', 'progfun_002', 'geomatique_003', 'venture_001']
-
-course = courses[0]
-exp_type = 'baseline_' + course
+courses = ['analysenumerique_001', 'analysenumerique_002', 'analysenumerique_003', 'cpp_fr_001', 'dsp_001', 'dsp_004', 'dsp_005', 'dsp_006','hwts_001', 'hwts_002','initprogcpp_001', 'microcontroleurs_003', 'microcontroleurs_004', 'microcontroleurs_005', 'microcontroleurs_006', 'progfun_003', 'structures_002', 'structures_003', 'villesafricaines_002', 'villesafricaines_003']
 rnn_models = [bidirectional_lstm_32, bidirectional_lstm_32_32, bidirectional_lstm_64, bidirectional_lstm_128]
 
-save_name = 'run_history/' + course + '_baseline_model_' + week_type + '_bilstm'
+experiment = 'fasttext_meta_100e'
+save_name = 'run_history/fasttext_meta_100e_best_model_all_layers' + '_20' + week_type + '_bilstm'
 save_stats = save_name + ".csv"
 save_val_stats = save_name + "val.csv"
 
@@ -80,7 +97,8 @@ experiment_scores = pd.DataFrame(columns=['acc', 'bac','prec','rec','f1', 'auc',
 val_exp_scores = pd.DataFrame(columns=['acc', 'bac','prec','rec','f1', 'auc', 'feature_type', 'week_type', 'course', 'model_name','data_balance', 'timestamp', 'percentile'])
 transfer_experiment_scores = pd.DataFrame(columns=[ 'experiment_type','experiment','acc', 'bac','prec','rec','f1', 'auc', 'feature_type', 'week_type', 'course', 'model_name','data_balance', 'timestamp', 'percentile'])
 
-metadata = pd.read_csv('metadata.csv')
+metadata = pd.read_csv('new_data/metadata28.csv')
+meta_model = load_meta_model(list(metadata['title']))
 early_predict = [0.4, 0.6]
 epochs = 100
 
@@ -118,6 +136,12 @@ for percentile in early_predict:
 
         course_features = np.concatenate(feature_list, axis=2)
         print(course_features.shape)
+        # add meta_features
+        adding_meta_each_week = np.repeat(meta_feature(course, meta_model)[:, np.newaxis, :], course_features.shape[1], axis=1).reshape((course_features.shape[1], 30))
+        adding_meta_each_week = np.repeat(adding_meta_each_week[np.newaxis, :, :], course_features.shape[0], axis=0)
+        print(adding_meta_each_week.shape)
+        course_features = np.concatenate([adding_meta_each_week, course_features], axis=2)
+        print(course_features.shape)
 
         print(course, total_weeks, num_weeks, course_features.shape, percentile)
         x_train_c, x_test_v_c, y_train_c, y_test_v_c = train_test_split(course_features, labels.values, test_size=test_size + val_size, random_state=0, stratify=labels)
@@ -135,29 +159,25 @@ for percentile in early_predict:
 
 
     # ### train-test split
+    # In[26]:
+
     x_train, x_test, x_val = np.concatenate(x_train), np.concatenate(x_test), np.concatenate(x_val)
     y_train, y_test, y_val = np.concatenate(y_train), np.concatenate(y_test), np.concatenate(y_val)
-    
-    print(x_train.shape)
 
     best_models = []
     for model in rnn_models:
         print(model.__name__)
         current_timestamp = str(time.time())[:-2]
-
-        # train model
-        history, scores, val_scores, best_model = model(x_train, y_train, x_test, y_test, x_val, y_val, week_type, feature_types, course, current_timestamp, num_epochs=epochs)
+        history, scores, val_scores, best_model = model(x_train, y_train, x_test, y_test, x_val, y_val, week_type, feature_types, course, current_timestamp, num_epochs=epochs, experiment=experiment)
         experiment_scores.loc[counter] = scores
         val_exp_scores.loc[counter] = val_scores
         counter += 1
 
-        run_name = 'baseline_' + course + model.__name__  + "_ep" + str(percentile) + "_" + current_timestamp
+        run_name = "fasttext_meta_easy_fail_" + model.__name__  + "_ep" + str(percentile) + "_" + current_timestamp
 
         plot_history(history, 'run_history/' + run_name, counter)
         numpy_loss_history = np.array(history.history['loss'])
         np.savetxt('run_history/' + run_name + "_loss_history.txt", numpy_loss_history, delimiter=",")
-        
-        # save experimental scores
         experiment_scores.to_csv(save_stats)
         val_exp_scores.to_csv(save_val_stats)
         
