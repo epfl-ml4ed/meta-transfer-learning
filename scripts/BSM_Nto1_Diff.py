@@ -2,8 +2,8 @@
 # coding: utf-8
 
 # Experiment: Final architecture for BSM, train on 20 courses, predict on 1 course. Meta features, attention, and projection.
-# RQs: 2
-# Code: BSM N-1 Diff
+# RQs: 2, 3
+# Code: BSM N-1 Diff, BSM N-C Diff
 # Author: vinitra
 
 import numpy as np
@@ -378,7 +378,10 @@ rnn_mode = True
 path = '../data/result/easy-fail/'
 week_type = 'eq_week'
 feature_types = [ "lalle_conati", "boroujeni_et_al", "chen_cui", "marras_et_al"]
+
+# Change the training courses below to reflect the BSM N-C Diff case
 courses = ['analysenumerique_001', 'analysenumerique_002', 'analysenumerique_003', 'cpp_fr_001', 'dsp_001', 'dsp_004', 'dsp_005', 'dsp_006','hwts_001', 'hwts_002','initprogcpp_001', 'microcontroleurs_003', 'microcontroleurs_004', 'microcontroleurs_005', 'microcontroleurs_006', 'progfun_003', 'structures_002', 'structures_003', 'villesafricaines_002', 'villesafricaines_003']
+
 rnn_models = [bidirectional_lstm_32, bidirectional_lstm_32_32, bidirectional_lstm_64, bidirectional_lstm_128]
 experiment = 'jan25_noproj_final_arch_meta_32_32_t60_ldesc60'
 exp_type = experiment

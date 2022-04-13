@@ -1,26 +1,19 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# # Baseline Experiments
-# models: SVM, RandomForest, Logistic Regression, MLP, Simple 2 layer NN
+# Experiment: Take a model and do inference on all students (not just the hard students)
+# RQs: 2, Figure 4
+# Code: All Students BO, BSM, BTM
+# Author: vinitra
 
-# In[59]:
 
 
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-from math import floor, ceil
-import sklearn as sk
-from keras import Model
-from keras.models import Sequential
-from keras.layers import Activation, Dense, Embedding, LSTM, SimpleRNN, GRU, Masking, Bidirectional, Dropout, TimeDistributed, Flatten, Concatenate, GlobalMaxPooling2D, Attention
-from keras import Input
 
 from sklearn.metrics import balanced_accuracy_score, precision_score, recall_score, roc_auc_score, f1_score, accuracy_score
-from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import normalize
-import os.path
 import matplotlib.pyplot as pyplot
 import tensorflow_hub as hub
 

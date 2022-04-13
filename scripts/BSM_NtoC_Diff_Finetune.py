@@ -86,10 +86,10 @@ def get_meta_info(course):
     print(adding_info_about_course.values.shape)
     return adding_info_about_course.values
 
-def predict_on_transfer(best_model, exp_type, percentile, name):
+def predict_on_transfer(best_model, exp_type, percentile, name, transfer_courses, num_meta_features):
     week_type = 'eq_week'
     feature_types = [ "lalle_conati", "boroujeni_et_al", "chen_cui", "marras_et_al"]
-    courses = ['villesafricaines_001']
+    courses = transfer_courses
     metadata = pd.read_csv('new_data/metadata_augmented.csv')
     
     path = '../data/result/easy-fail/'
@@ -123,35 +123,35 @@ def predict_on_transfer(best_model, exp_type, percentile, name):
             feature_list.append(feature_current)
         course_features = np.concatenate(feature_list, axis=2)
 
-#         # add meta_features
-#         title = list(metadata[metadata['course_id'] == course.replace('_', '-')]['title'])[0]
-#         meta_title = meta_feature(title, meta_model)
-#         adding_meta_each_week = np.repeat(meta_title[:, np.newaxis, :], course_features.shape[1], axis=1).reshape((course_features.shape[1], title_size))
-#         adding_meta_each_week = np.repeat(adding_meta_each_week[np.newaxis, :, :], course_features.shape[0], axis=0)
-#         print(adding_meta_each_week.shape)
+        # add meta_features
+        title = list(metadata[metadata['course_id'] == course.replace('_', '-')]['title'])[0]
+        meta_title = meta_feature(title, meta_model)
+        adding_meta_each_week = np.repeat(meta_title[:, np.newaxis, :], course_features.shape[1], axis=1).reshape((course_features.shape[1], title_size))
+        adding_meta_each_week = np.repeat(adding_meta_each_week[np.newaxis, :, :], course_features.shape[0], axis=0)
+        print(adding_meta_each_week.shape)
         
-#         meta_features = np.concatenate([adding_meta_each_week, course_features], axis=2)
+        meta_features = np.concatenate([adding_meta_each_week, course_features], axis=2)
         
-#         description = list(metadata[metadata['course_id'] == course.replace('_', '-')]['long_description'])[0]
-#         meta_desc = meta_feature(title, desc_meta_model)
-#         adding_meta_each_week = np.repeat(meta_desc[:, np.newaxis, :], course_features.shape[1], axis=1).reshape((course_features.shape[1], desc_size))
-#         adding_meta_each_week = np.repeat(adding_meta_each_week[np.newaxis, :, :], course_features.shape[0], axis=0)
-#         print(adding_meta_each_week.shape)
+        description = list(metadata[metadata['course_id'] == course.replace('_', '-')]['long_description'])[0]
+        meta_desc = meta_feature(title, desc_meta_model)
+        adding_meta_each_week = np.repeat(meta_desc[:, np.newaxis, :], course_features.shape[1], axis=1).reshape((course_features.shape[1], desc_size))
+        adding_meta_each_week = np.repeat(adding_meta_each_week[np.newaxis, :, :], course_features.shape[0], axis=0)
+        print(adding_meta_each_week.shape)
         
-#         meta_features = np.concatenate([adding_meta_each_week, meta_features], axis=2)
+        meta_features = np.concatenate([adding_meta_each_week, meta_features], axis=2)
         
-#         adding_info_about_course = np.repeat(get_meta_info(course)[:, np.newaxis, :], meta_features.shape[1], axis=1).reshape((meta_features.shape[1], 6))
-#         print(adding_info_about_course.shape)
-#         adding_info_about_course = np.repeat(adding_info_about_course[np.newaxis, :, :], meta_features.shape[0], axis=0)
-#         print(adding_info_about_course.shape)
+        adding_info_about_course = np.repeat(get_meta_info(course)[:, np.newaxis, :], meta_features.shape[1], axis=1).reshape((meta_features.shape[1], 6))
+        print(adding_info_about_course.shape)
+        adding_info_about_course = np.repeat(adding_info_about_course[np.newaxis, :, :], meta_features.shape[0], axis=0)
+        print(adding_info_about_course.shape)
         
-#         meta_features = np.concatenate([adding_info_about_course, meta_features], axis=2)
-#         print(meta_features.shape)
-#         if exp_type == 'baseline':
-#             features = course_features
-#         else:
-#             features = [meta_features[:,:,45:], meta_features[:, 0, :45]]
-        features = course_features
+        meta_features = np.concatenate([adding_info_about_course, meta_features], axis=2)
+        print(meta_features.shape)
+        if exp_type == 'baseline':
+            features = course_features
+        else:
+            features = [meta_features[:,:,num_meta_features:], meta_features[:, 0, :num_meta_features]]
+
         scores1 = evaluate(best_model, features, labels, week_type, feature_types, course, y_pred=None, model_name=name)
         scores1['experiment_type'] = exp_type
         experiment_scores.loc[counter] = scores1
@@ -163,10 +163,12 @@ rnn_mode = True
 path = '../data/result/easy-fail/'
 week_type = 'eq_week'
 feature_types = [ "lalle_conati", "boroujeni_et_al", "chen_cui", "marras_et_al"]
-courses = ['villesafricaines_002', 'villesafricaines_003']
+courses = ['progfun_003']
+transfer_courses = ['progfun_002']
+# courses = ['analysenumerique_001', 'analysenumerique_002', 'analysenumerique_003', 'cpp_fr_001', 'dsp_001', 'dsp_004', 'dsp_005', 'dsp_006','hwts_001', 'hwts_002','initprogcpp_001', 'microcontroleurs_003', 'microcontroleurs_004', 'microcontroleurs_005', 'microcontroleurs_006', 'progfun_003', 'structures_002', 'structures_003', 'villesafricaines_002', 'villesafricaines_003']
 
-rnn_models = ['lstm-bi-32-32-1641514744.58229']
-experiment = 'finetune_baseline20_va'
+rnn_models = ['lstm-bi-64-jan25_proj_final_arch_meta_32_32_t30_ldesc300.41643072188.38263', 'lstm-bi-128-jan25_proj_final_arch_meta_32_32_t60_ldesc300.61643080572.55902']
+experiment = 'jan31_finetune_final_arch_pf'
 exp_type = experiment
 save_name = 'run_history/' + experiment + '_20' + week_type + '_bilstm'
 save_stats = save_name + ".csv"
@@ -176,6 +178,12 @@ train_size = 0.8
 test_size = 0.1
 val_size = 0.1
 num_epochs = 50
+
+# jan25_proj_final_arch_meta_32_32_t30_ldesc30TF-LSTM-bi-64 0.4
+# lstm-bi-64-jan25_proj_final_arch_meta_32_32_t30_ldesc300.41643072188.38263
+
+# jan25_proj_final_arch_meta_32_32_t60_ldesc30TF-LSTM-bi-128 0.6
+# lstm-bi-128-jan25_proj_final_arch_meta_32_32_t60_ldesc300.61643080572.55902
 
 counter = 0
 experiment_scores = pd.DataFrame(columns=['acc', 'bac','prec','rec','f1', 'auc', 'feature_type', 'week_type', 'course', 'model_name','data_balance', 'timestamp', 'percentile'])
@@ -187,10 +195,14 @@ desc_size = 30
 metadata = pd.read_csv('new_data/metadata_augmented.csv')
 meta_model = load_meta_model(list(metadata['title']), title_size)
 desc_meta_model = load_meta_model(list(metadata['long_description']), desc_size)
-early_predict = [0.6]
+early_predict = [0.4, 0.6]
 epochs = 100
 
+
 for percentile in early_predict:
+    if percentile == 0.6:
+        title_size = 60
+        meta_model = load_meta_model(list(metadata['title']), title_size)
     x_train = []
     x_test = []
     x_val = []
@@ -227,31 +239,31 @@ for percentile in early_predict:
         course_features = np.concatenate(feature_list, axis=2)
         print(course_features.shape)
         
-#         # add meta_features
-#         title = list(metadata[metadata['course_id'] == course.replace('_', '-')]['title'])[0]
-#         meta_title = meta_feature(title, meta_model)
-#         adding_meta_each_week = np.repeat(meta_title[:, np.newaxis, :], course_features.shape[1], axis=1).reshape((course_features.shape[1], title_size))
-#         adding_meta_each_week = np.repeat(adding_meta_each_week[np.newaxis, :, :], course_features.shape[0], axis=0)
-#         print(adding_meta_each_week.shape)
+        # add meta_features
+        title = list(metadata[metadata['course_id'] == course.replace('_', '-')]['title'])[0]
+        meta_title = meta_feature(title, meta_model)
+        adding_meta_each_week = np.repeat(meta_title[:, np.newaxis, :], course_features.shape[1], axis=1).reshape((course_features.shape[1], title_size))
+        adding_meta_each_week = np.repeat(adding_meta_each_week[np.newaxis, :, :], course_features.shape[0], axis=0)
+        print(adding_meta_each_week.shape)
         
-#         course_features = np.concatenate([adding_meta_each_week, course_features], axis=2)
+        course_features = np.concatenate([adding_meta_each_week, course_features], axis=2)
         
-#         description = list(metadata[metadata['course_id'] == course.replace('_', '-')]['long_description'])[0]
-#         meta_desc = meta_feature(title, desc_meta_model)
-#         adding_meta_each_week = np.repeat(meta_desc[:, np.newaxis, :], course_features.shape[1], axis=1).reshape((course_features.shape[1], desc_size))
-#         adding_meta_each_week = np.repeat(adding_meta_each_week[np.newaxis, :, :], course_features.shape[0], axis=0)
-#         print(adding_meta_each_week.shape)
+        description = list(metadata[metadata['course_id'] == course.replace('_', '-')]['long_description'])[0]
+        meta_desc = meta_feature(title, desc_meta_model)
+        adding_meta_each_week = np.repeat(meta_desc[:, np.newaxis, :], course_features.shape[1], axis=1).reshape((course_features.shape[1], desc_size))
+        adding_meta_each_week = np.repeat(adding_meta_each_week[np.newaxis, :, :], course_features.shape[0], axis=0)
+        print(adding_meta_each_week.shape)
         
-#         course_features = np.concatenate([adding_meta_each_week, course_features], axis=2)
-#         print(course_features.shape)
+        course_features = np.concatenate([adding_meta_each_week, course_features], axis=2)
+        print(course_features.shape)
         
-#         adding_info_about_course = np.repeat(get_meta_info(course)[:, np.newaxis, :], course_features.shape[1], axis=1).reshape((course_features.shape[1], 6))
-#         print(adding_info_about_course.shape)
-#         adding_info_about_course = np.repeat(adding_info_about_course[np.newaxis, :, :], course_features.shape[0], axis=0)
-#         print(adding_info_about_course.shape)
+        adding_info_about_course = np.repeat(get_meta_info(course)[:, np.newaxis, :], course_features.shape[1], axis=1).reshape((course_features.shape[1], 6))
+        print(adding_info_about_course.shape)
+        adding_info_about_course = np.repeat(adding_info_about_course[np.newaxis, :, :], course_features.shape[0], axis=0)
+        print(adding_info_about_course.shape)
         
-#         course_features = np.concatenate([adding_info_about_course, course_features], axis=2)
-#         print(course_features.shape)
+        course_features = np.concatenate([adding_info_about_course, course_features], axis=2)
+        print(course_features.shape)
 
         print(course, total_weeks, num_weeks, course_features.shape, percentile)
         x_train_c, x_test_v_c, y_train_c, y_test_v_c = train_test_split(course_features, labels.values, test_size=test_size + val_size, random_state=0, stratify=labels)
@@ -269,23 +281,22 @@ for percentile in early_predict:
 
 
     # ### train-test split
-    # In[26]:
 
     x_train, x_test, x_val = np.concatenate(x_train), np.concatenate(x_test), np.concatenate(x_val)
     y_train, y_test, y_val = np.concatenate(y_train), np.concatenate(y_test), np.concatenate(y_val)
 
+    num_course_features = 45
+    num_meta_features = x_train.shape[2] - num_course_features
+    
     best_models = []
     for model in rnn_models:
+        if "lstm-bi-128" in model and percentile == 0.4:
+            continue
+        if "lstm-bi-64" in model and percentile == 0.6:
+            continue
         reconstructed_model = tf.keras.models.load_model("checkpoints/" + model)
 
         print("Number of layers in the base model: ", len(reconstructed_model.layers))
-
-        # Fine-tune from this layer onwards
-#         fine_tune_at = floor(len(reconstructed_model.layers)/2)
-
-#         # Freeze all the layers before the `fine_tune_at` layer
-#         for layer in reconstructed_model.layers[:fine_tune_at]:
-#             layer.trainable = False
 
         for layer in reconstructed_model.layers:
             layer.trainable = True
@@ -309,30 +320,27 @@ for percentile in early_predict:
 
 
         tf.config.run_functions_eagerly(True)
-#         history = reconstructed_model.fit([x_train[:, :, 45:], x_train[:, 0, :45]], y_train, 
-#                                           validation_data=([x_val[:, :, 45:], x_val[:, 0, :45]], y_val), 
-#                                           epochs=num_epochs, batch_size=64, verbose=1, callbacks=[model_checkpoint_callback])
-        history = reconstructed_model.fit(x_train, y_train, 
-                                          validation_data=(x_val, y_val), 
+        history = reconstructed_model.fit([x_train[:, :, num_meta_features:], x_train[:, 0, :num_meta_features]], y_train, 
+                                          validation_data=([x_val[:, :, num_meta_features:], x_val[:, 0, :num_meta_features]], y_val), 
                                           epochs=num_epochs, batch_size=64, verbose=1, callbacks=[model_checkpoint_callback])
         model = tf.keras.models.load_model(checkpoint_filepath)
 
                 # evaluate the model
-        y_pred = model.predict(x_test)
+        y_pred = model.predict([x_test[:, :, num_meta_features:], x_test[:, 0, :num_meta_features]])
         y_pred = [1 if y[0] >= 0.5 else 0 for y in y_pred]
         # evaluate the model
         model_params = {'model': 'LSTM-bi', 'epochs': num_epochs, 'batch_size': 64, 'loss': 'binary_cross_entropy'}
-        scores = evaluate(None, x_test, y_test, week_type, feature_types, course, y_pred=y_pred, model_name="TF-LSTM-bi-128" , model_params=model_params)
+        scores = evaluate(None, [x_test[:, :, num_meta_features:], x_test[:, 0, :num_meta_features]], y_test, week_type, feature_types, course, y_pred=y_pred, model_name=exp_type , model_params=model_params)
 
-        y_val_pred = model.predict(x_val)
+        y_val_pred = model.predict([x_val[:, :, num_meta_features:], x_val[:, 0, :num_meta_features]])
         y_val_pred = [1 if y[0] >= 0.5 else 0 for y in y_val_pred]
-        val_scores = evaluate(None, x_val, y_val, week_type, feature_types, course, y_pred=y_val_pred, model_name="TF-LSTM-bi-128" , model_params=model_params)
+        val_scores = evaluate(None, [x_val[:, :, num_meta_features:], x_val[:, 0, :num_meta_features]], y_val, week_type, feature_types, course, y_pred=y_val_pred, model_name=exp_type , model_params=model_params)
         reconstructed_model.save(checkpoint_filepath + '_final_e')
         experiment_scores.loc[counter] = scores
         val_exp_scores.loc[counter] = val_scores
         counter += 1
 
-        run_name = exp_type + model.__name__  + "_ep" + str(percentile) + "_" + current_timestamp
+        run_name = exp_type + "_ep" + str(percentile) + "_" + current_timestamp
 
         plot_history(history, 'run_history/' + run_name, counter)
         numpy_loss_history = np.array(history.history['loss'])
@@ -344,7 +352,7 @@ for percentile in early_predict:
         print("Running transfer experiments.")
         
         # run transfer experiments
-        transfer_experiment_scores = pd.concat([transfer_experiment_scores, predict_on_transfer(model, exp_type, percentile, run_name)])
+        transfer_experiment_scores = pd.concat([transfer_experiment_scores, predict_on_transfer(model, exp_type, percentile, run_name, transfer_courses, num_meta_features)])
         transfer_experiment_scores.to_csv(save_name + "_transfer_results.csv")
 
 experiment_scores.to_csv(save_stats)

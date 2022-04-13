@@ -1,21 +1,15 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# # Baseline Experiments
-# models: SVM, RandomForest, Logistic Regression, MLP, Simple 2 layer NN
-
-# In[59]:
+# Experiment: Finetune the BTM model on previous iterations of a course, and predict on the last iteration
+# RQs: 3
+# Code: BTM N-C Diff FT
+# Author: vinitra
 
 
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-from math import floor, ceil
-import sklearn as sk
-from keras import Model
-from keras.models import Sequential
-from keras.layers import Activation, Dense, Embedding, LSTM, SimpleRNN, GRU, Masking, Bidirectional, Dropout, TimeDistributed, Flatten, Concatenate, GlobalMaxPooling2D, Attention
-from keras import Input
 
 from sklearn.metrics import balanced_accuracy_score, precision_score, recall_score, roc_auc_score, f1_score, accuracy_score
 from sklearn.model_selection import train_test_split
@@ -286,7 +280,6 @@ for percentile in early_predict:
 
 
     # ### train-test split
-    # In[26]:
 
     x_train, x_test, x_val = np.concatenate(x_train), np.concatenate(x_test), np.concatenate(x_val)
     y_train, y_test, y_val = np.concatenate(y_train), np.concatenate(y_test), np.concatenate(y_val)

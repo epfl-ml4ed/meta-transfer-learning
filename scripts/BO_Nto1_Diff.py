@@ -2,8 +2,8 @@
 # coding: utf-8
 
 # Experiment: Train on 20 courses, predict on one course
-# RQs: 1, 2
-# Code: BO N-1 Diff
+# RQs: 1, 2, 3
+# Code: BO N-1 Diff, BO N-C Diff
 # Author: vinitra
 
 
@@ -60,9 +60,11 @@ path = '../data/result/easy-fail/'
 exp_type = 'baseline'
 week_type = 'eq_week'
 feature_types = [ "lalle_conati", "boroujeni_et_al", "chen_cui", "marras_et_al"]
-courses = ['analysenumerique_001', 'analysenumerique_002', 'analysenumerique_003', 'cpp_fr_001', 'dsp_001', 'dsp_004', 'dsp_005', 'dsp_006','hwts_001', 'hwts_002','initprogcpp_001', 'microcontroleurs_003', 'microcontroleurs_004', 'microcontroleurs_005', 'microcontroleurs_006', 'progfun_003', 'structures_002', 'structures_003', 'villesafricaines_002', 'villesafricaines_003']
-rnn_models = [bidirectional_lstm_32, bidirectional_lstm_32_32, bidirectional_lstm_64, bidirectional_lstm_128]
 
+# Change the training courses below to reflect the BO N-C Diff case
+courses = ['analysenumerique_001', 'analysenumerique_002', 'analysenumerique_003', 'cpp_fr_001', 'dsp_001', 'dsp_004', 'dsp_005', 'dsp_006','hwts_001', 'hwts_002','initprogcpp_001', 'microcontroleurs_003', 'microcontroleurs_004', 'microcontroleurs_005', 'microcontroleurs_006', 'progfun_003', 'structures_002', 'structures_003', 'villesafricaines_002', 'villesafricaines_003']
+
+rnn_models = [bidirectional_lstm_32, bidirectional_lstm_32_32, bidirectional_lstm_64, bidirectional_lstm_128]
 save_name = 'run_history/baseline' + '_20_' + week_type + '_bilstm'
 save_stats = save_name + ".csv"
 save_val_stats = save_name + "val.csv"
