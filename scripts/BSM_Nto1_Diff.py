@@ -1,19 +1,20 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# # Baseline Experiments
-# models: SVM, RandomForest, Logistic Regression, MLP, Simple 2 layer NN
-
-# In[59]:
-
+# Experiment: Final architecture for BSM, train on 20 courses, predict on 1 course. Meta features, attention, and projection.
+# RQs: 2
+# Code: BSM N-1 Diff
+# Author: vinitra
 
 import numpy as np
 import pandas as pd
 import tensorflow as tf
 from math import floor, ceil
 import sklearn as sk
-from keras.models import Sequential
-from keras.layers import Activation, Dense, Embedding, LSTM, SimpleRNN, GRU, Masking, Bidirectional, Dropout, TimeDistributed
+from keras import Model
+from keras.layers import Dense, LSTM, Bidirectional, Concatenate, BatchNormalization, AdditiveAttention
+from keras import Input
+import keras
 
 from sklearn.metrics import balanced_accuracy_score, precision_score, recall_score, roc_auc_score, f1_score, accuracy_score
 from sklearn.model_selection import train_test_split
@@ -21,9 +22,13 @@ from sklearn.preprocessing import normalize
 import os.path
 import matplotlib.pyplot as pyplot
 import tensorflow_hub as hub
+from attention_helpers import project_embeddings
 
 import time
 
+num_projection_layers = 1
+projection_dims = 256
+dropout_rate = 0.1
 
 def evaluate(model, x_test, y_test, week_type, feature_type, course, model_name=None, model_params=None, y_pred=None):
     scores={}
@@ -53,196 +58,223 @@ def evaluate(model, x_test, y_test, week_type, feature_type, course, model_name=
 
     return scores
 
-def bidirectional_lstm_64(x_train, y_train, x_test, y_test, x_val, y_val, week_type, feature_types, course, num_epochs=10, experiment=''):
-    dim_max = int(np.max(x_train[:, :]) + 1)
-    n_dims = x_train.shape[0]
-    n_weeks = x_train.shape[1]
-    n_features = x_train.shape[2]
-    look_back = 3
-    
-    # LSTM
-    # define model
-    lstm = Sequential()
-    # Add an Embedding layer expecting input vocab of size 1000, and
-    # output embedding dimension of size 64.
-#     lstm.add(Embedding(input_dim=dim_max, output_dim=64))
-    # Add a LSTM layer with 128 internal units.
-    # lstm.add(Masking(mask_value=-1., input_shape=(n_dims, n_weeks, n_features)))
-    # lstm.add(LSTM(128, input_shape=(n_weeks, look_back), return_sequences=True))
-    lstm.add(Bidirectional(LSTM(64)))
-
-    # Add a sigmoid Dense layer with 1 units.
-    lstm.add(Dense(1, activation='sigmoid'))
-    # compile the model
-    lstm.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
-    
-    checkpoint_filepath = 'checkpoints/lstm-bi-64-' + experiment + current_timestamp
-
-    os.mkdir(checkpoint_filepath)
-    model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
-        filepath=checkpoint_filepath,
-        monitor='val_accuracy',
-        mode='max',
-        save_best_only=True)
-    # fit the model
-    history = lstm.fit(x_train, y_train, validation_data=(x_val, y_val), epochs=num_epochs, batch_size=64, verbose=1, callbacks=[model_checkpoint_callback])
-    lstm = tf.keras.models.load_model(checkpoint_filepath)
-    # evaluate the model
-    y_pred = lstm.predict(x_test)
-    y_pred = [1 if y[0] >= 0.5 else 0 for y in y_pred]
-    # evaluate the model
-    model_params = {'model': 'LSTM-bi', 'epochs': num_epochs, 'batch_size': 64, 'loss': 'binary_cross_entropy'}
-    scores = evaluate(None, x_test, y_test, week_type, feature_types, course, y_pred=y_pred, model_name="TF-LSTM-bi-64" , model_params=model_params)
-
-    y_val_pred = lstm.predict(x_val)
-    y_val_pred = [1 if y[0] >= 0.5 else 0 for y in y_val_pred]
-    val_scores = evaluate(None, x_val, y_val, week_type, feature_types, course, y_pred=y_val_pred, model_name="TF-LSTM-bi-64" , model_params=model_params)
-    lstm.save(checkpoint_filepath + experiment + '_final_e')
-    return history, scores, val_scores, lstm
-
 def bidirectional_lstm_32_32(x_train, y_train, x_test, y_test, x_val, y_val, week_type, feature_types, course, num_epochs=10, experiment=''):
     dim_max = int(np.max(x_train[:, :]) + 1)
     n_dims = x_train.shape[0]
     n_weeks = x_train.shape[1]
-    n_features = x_train.shape[2]
+    num_course_features = 45
+    num_meta_features = x_train.shape[2] - num_course_features
     look_back = 3
     
-    # LSTM
-    # define model
-    lstm = Sequential()
-    # Add an Embedding layer expecting input vocab of size 1000, and
-    # output embedding dimension of size 64.
-#     lstm.add(Embedding(input_dim=dim_max, output_dim=64))
-    # Add a LSTM layer with 128 internal units.
-    # lstm.add(Masking(mask_value=-1., input_shape=(n_dims, n_weeks, n_features)))
-    # lstm.add(LSTM(128, input_shape=(n_weeks, look_back), return_sequences=True))
-    lstm.add(Bidirectional(LSTM(32, return_sequences=True)))
-    lstm.add(Bidirectional(LSTM(32)))
-
-
-    # Add a sigmoid Dense layer with 1 units.
-    lstm.add(Dense(1, activation='sigmoid'))
-    # compile the model
-    lstm.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+    bilstm_input = Input(shape=(n_weeks, num_course_features), name="course_features")
+    meta_input = Input(shape=(num_meta_features), name="meta_features")
+    x = Bidirectional(LSTM(32, return_sequences=True))(bilstm_input)
+    x = Bidirectional(LSTM(32))(x)
+    x = BatchNormalization()(x)
+    meta = BatchNormalization()(meta_input)
+    att_meta = AdditiveAttention(use_scale=True,dropout=0.05, causal=True)([meta,meta])
+    meta = Concatenate(axis=1)([meta, att_meta])
+    x = project_embeddings(x, num_projection_layers, projection_dims, dropout_rate)
+    meta = project_embeddings(meta, num_projection_layers, projection_dims, dropout_rate)
+    x = Concatenate(axis=1)([x, meta])
+    att_x = AdditiveAttention(use_scale=True,dropout=0.05, causal=True)([x,x])    
+    x = Concatenate(axis=1)([x, att_x])
+    x = Dense(32, activation='sigmoid')(x)
+    x = Dense(32, activation='sigmoid')(x)
+    meta_output = Dense(1, activation='sigmoid')(x)
     
-    checkpoint_filepath = 'checkpoints/lstm-bi-32-32-'+ experiment + current_timestamp
-
+    model = Model([bilstm_input, meta_input], meta_output, name="bilstm_meta_32_32")
+    model.summary()
+   
+    # compile the model
+    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+    
+    checkpoint_filepath = 'checkpoints/lstm-bi-32-32-'+ experiment + str(percentile) + current_timestamp
     os.mkdir(checkpoint_filepath)
     model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
         filepath=checkpoint_filepath,
         monitor='val_accuracy',
         mode='max',
         save_best_only=True)
+    
     # fit the model
-    history = lstm.fit(x_train, y_train, validation_data=(x_val, y_val), epochs=num_epochs, batch_size=64, verbose=1, callbacks=[model_checkpoint_callback])
-    lstm = tf.keras.models.load_model(checkpoint_filepath)
+    history = model.fit([x_train[:, :, num_meta_features:], x_train[:, 0, :num_meta_features]] , y_train, validation_data=([x_val[:, :, num_meta_features:], x_val[:, 0, :num_meta_features]], y_val), epochs=num_epochs, batch_size=64, verbose=1, callbacks=[model_checkpoint_callback])
+    model = tf.keras.models.load_model(checkpoint_filepath)
     # evaluate the model
-    y_pred = lstm.predict(x_test)
+    y_pred = model.predict([x_test[:, :, num_meta_features:], x_test[:, 0, :num_meta_features]])
     y_pred = [1 if y[0] >= 0.5 else 0 for y in y_pred]
     # evaluate the model
     model_params = {'model': 'LSTM-bi', 'epochs': num_epochs, 'batch_size': 64, 'loss': 'binary_cross_entropy'}
-    scores = evaluate(None, x_test, y_test, week_type, feature_types, course, y_pred=y_pred, model_name="TF-LSTM-bi-32-32" , model_params=model_params)
+    scores = evaluate(None, [x_test[:, :, num_meta_features:], x_test[:, 0, :num_meta_features]], y_test, week_type, feature_types, course, y_pred=y_pred, model_name=experiment + "TF-LSTM-bi-32-32", model_params=model_params)
 
-    y_val_pred = lstm.predict(x_val)
+    y_val_pred = model.predict([x_val[:, :, num_meta_features:], x_val[:, 0, :num_meta_features]])
     y_val_pred = [1 if y[0] >= 0.5 else 0 for y in y_val_pred]
-    val_scores = evaluate(None, x_val, y_val, week_type, feature_types, course, y_pred=y_val_pred, model_name="TF-LSTM-bi-32-32" , model_params=model_params)
-    lstm.save(checkpoint_filepath + experiment + '_final_e')
-    return history, scores, val_scores, lstm
+    val_scores = evaluate(None, [x_val[:, :, num_meta_features:], x_val[:, 0, :num_meta_features]], y_val, week_type, feature_types, course, y_pred=y_val_pred, model_name=experiment + "TF-LSTM-bi-32-32", model_params=model_params)
+    model.save(checkpoint_filepath + '_final_e')
+    return history, scores, val_scores, model
 
 def bidirectional_lstm_32(x_train, y_train, x_test, y_test, x_val, y_val, week_type, feature_types, course, num_epochs=10, experiment=''):
     dim_max = int(np.max(x_train[:, :]) + 1)
     n_dims = x_train.shape[0]
     n_weeks = x_train.shape[1]
-    n_features = x_train.shape[2]
+    num_course_features = 45
+    num_meta_features = x_train.shape[2] - num_course_features
     look_back = 3
     
-    # LSTM
-    # define model
-    lstm = Sequential()
-    # Add an Embedding layer expecting input vocab of size 1000, and
-    # output embedding dimension of size 64.
-#     lstm.add(Embedding(input_dim=dim_max, output_dim=64))
-    # Add a LSTM layer with 128 internal units.
-    # lstm.add(Masking(mask_value=-1., input_shape=(n_dims, n_weeks, n_features)))
-    # lstm.add(LSTM(128, input_shape=(n_weeks, look_back), return_sequences=True))
-    lstm.add(Bidirectional(LSTM(32)))
-
-    # Add a sigmoid Dense layer with 1 units.
-    lstm.add(Dense(1, activation='sigmoid'))
-    # compile the model
-    lstm.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+    bilstm_input = Input(shape=(n_weeks, num_course_features), name="course_features")
+    meta_input = Input(shape=(num_meta_features), name="meta_features")
+    x = Bidirectional(LSTM(32))(bilstm_input)
+    x = BatchNormalization()(x)
+    meta = BatchNormalization()(meta_input)
+    att_meta = AdditiveAttention(use_scale=True,dropout=0.05, causal=True)([meta,meta])
+    meta = Concatenate(axis=1)([meta, att_meta])
+    x = project_embeddings(x, num_projection_layers, projection_dims, dropout_rate)
+    meta = project_embeddings(meta, num_projection_layers, projection_dims, dropout_rate)
+    x = Concatenate(axis=1)([x, meta])
+    att_x = AdditiveAttention(use_scale=True,dropout=0.05, causal=True)([x,x])    
+    x = Concatenate(axis=1)([x, att_x])
+    x = Dense(32, activation='sigmoid')(x)
+    x = Dense(32, activation='sigmoid')(x)
+    meta_output = Dense(1, activation='sigmoid')(x)
     
-    checkpoint_filepath = 'checkpoints/lstm-bi-32-' + experiment+ current_timestamp
-
+    model = Model([bilstm_input, meta_input], meta_output, name="bilstm_meta_32")
+    model.summary()
+   
+    # compile the model
+    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+    
+    checkpoint_filepath = 'checkpoints/lstm-bi-32-'+ experiment + str(percentile) + current_timestamp
     os.mkdir(checkpoint_filepath)
     model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
         filepath=checkpoint_filepath,
         monitor='val_accuracy',
         mode='max',
         save_best_only=True)
+    
     # fit the model
-    history = lstm.fit(x_train, y_train, validation_data=(x_val, y_val), epochs=num_epochs, batch_size=64, verbose=1, callbacks=[model_checkpoint_callback])
-    lstm = tf.keras.models.load_model(checkpoint_filepath)
+    history = model.fit([x_train[:, :, num_meta_features:], x_train[:, 0, :num_meta_features]] , y_train, validation_data=([x_val[:, :, num_meta_features:], x_val[:, 0, :num_meta_features]], y_val), epochs=num_epochs, batch_size=64, verbose=1, callbacks=[model_checkpoint_callback])
+    model = tf.keras.models.load_model(checkpoint_filepath)
     # evaluate the model
-    y_pred = lstm.predict(x_test)
+    y_pred = model.predict([x_test[:, :, num_meta_features:], x_test[:, 0, :num_meta_features]])
     y_pred = [1 if y[0] >= 0.5 else 0 for y in y_pred]
     # evaluate the model
     model_params = {'model': 'LSTM-bi', 'epochs': num_epochs, 'batch_size': 64, 'loss': 'binary_cross_entropy'}
-    scores = evaluate(None, x_test, y_test, week_type, feature_types, course, y_pred=y_pred, model_name="TF-LSTM-bi-32" , model_params=model_params)
+    scores = evaluate(None, [x_test[:, :, num_meta_features:], x_test[:, 0, :num_meta_features]], y_test, week_type, feature_types, course, y_pred=y_pred, model_name=experiment + "TF-LSTM-bi-32", model_params=model_params)
 
-    y_val_pred = lstm.predict(x_val)
+    y_val_pred = model.predict([x_val[:, :, num_meta_features:], x_val[:, 0, :num_meta_features]])
     y_val_pred = [1 if y[0] >= 0.5 else 0 for y in y_val_pred]
-    val_scores = evaluate(None, x_val, y_val, week_type, feature_types, course, y_pred=y_val_pred, model_name="TF-LSTM-bi-32" , model_params=model_params)
-    lstm.save(checkpoint_filepath + experiment + '_final_e')
-    return history, scores, val_scores, lstm
+    val_scores = evaluate(None, [x_val[:, :, num_meta_features:], x_val[:, 0, :num_meta_features]], y_val, week_type, feature_types, course, y_pred=y_val_pred, model_name=experiment + "TF-LSTM-bi-32", model_params=model_params)
+    model.save(checkpoint_filepath + '_final_e')
+    return history, scores, val_scores, model
+
+def bidirectional_lstm_64(x_train, y_train, x_test, y_test, x_val, y_val, week_type, feature_types, course, num_epochs=10, experiment=''):
+    dim_max = int(np.max(x_train[:, :]) + 1)
+    n_dims = x_train.shape[0]
+    n_weeks = x_train.shape[1]
+    num_course_features = 45
+    num_meta_features = x_train.shape[2] - num_course_features
+    look_back = 3
+    
+    bilstm_input = Input(shape=(n_weeks, num_course_features), name="course_features")
+    meta_input = Input(shape=(num_meta_features), name="meta_features")
+    x = Bidirectional(LSTM(64))(bilstm_input)
+    x = BatchNormalization()(x)
+    meta = BatchNormalization()(meta_input)
+    att_meta = AdditiveAttention(use_scale=True,dropout=0.05, causal=True)([meta,meta])
+    meta = Concatenate(axis=1)([meta, att_meta])
+    x = project_embeddings(x, num_projection_layers, projection_dims, dropout_rate)
+    meta = project_embeddings(meta, num_projection_layers, projection_dims, dropout_rate)
+    x = Concatenate(axis=1)([x, meta])
+    att_x = AdditiveAttention(use_scale=True,dropout=0.05, causal=True)([x,x])    
+    x = Concatenate(axis=1)([x, att_x])
+    x = Dense(32, activation='sigmoid')(x)
+    x = Dense(32, activation='sigmoid')(x)
+    meta_output = Dense(1, activation='sigmoid')(x)
+    
+    model = Model([bilstm_input, meta_input], meta_output, name="bilstm_meta_64")
+    model.summary()
+   
+    # compile the model
+    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+    
+    checkpoint_filepath = 'checkpoints/lstm-bi-64-'+ experiment + str(percentile) + current_timestamp
+    os.mkdir(checkpoint_filepath)
+    model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
+        filepath=checkpoint_filepath,
+        monitor='val_accuracy',
+        mode='max',
+        save_best_only=True)
+    
+    # fit the model
+    history = model.fit([x_train[:, :, num_meta_features:], x_train[:, 0, :num_meta_features]] , y_train, validation_data=([x_val[:, :, num_meta_features:], x_val[:, 0, :num_meta_features]], y_val), epochs=num_epochs, batch_size=64, verbose=1, callbacks=[model_checkpoint_callback])
+    model = tf.keras.models.load_model(checkpoint_filepath)
+    # evaluate the model
+    y_pred = model.predict([x_test[:, :, num_meta_features:], x_test[:, 0, :num_meta_features]])
+    y_pred = [1 if y[0] >= 0.5 else 0 for y in y_pred]
+    # evaluate the model
+    model_params = {'model': 'LSTM-bi', 'epochs': num_epochs, 'batch_size': 64, 'loss': 'binary_cross_entropy'}
+    scores = evaluate(None, [x_test[:, :, num_meta_features:], x_test[:, 0, :num_meta_features]], y_test, week_type, feature_types, course, y_pred=y_pred, model_name=experiment + "TF-LSTM-bi-64", model_params=model_params)
+
+    y_val_pred = model.predict([x_val[:, :, num_meta_features:], x_val[:, 0, :num_meta_features]])
+    y_val_pred = [1 if y[0] >= 0.5 else 0 for y in y_val_pred]
+    val_scores = evaluate(None, [x_val[:, :, num_meta_features:], x_val[:, 0, :num_meta_features]], y_val, week_type, feature_types, course, y_pred=y_val_pred, model_name=experiment + "TF-LSTM-bi-64", model_params=model_params)
+    model.save(checkpoint_filepath  + '_final_e')
+    return history, scores, val_scores, model
 
 
 def bidirectional_lstm_128(x_train, y_train, x_test, y_test, x_val, y_val, week_type, feature_types, course, num_epochs=10, experiment=''):
     dim_max = int(np.max(x_train[:, :]) + 1)
     n_dims = x_train.shape[0]
     n_weeks = x_train.shape[1]
-    n_features = x_train.shape[2]
+    num_course_features = 45
+    num_meta_features = x_train.shape[2] - num_course_features
     look_back = 3
     
-    # LSTM
-    # define model
-    lstm = Sequential()
-    # Add an Embedding layer expecting input vocab of size 1000, and
-    # output embedding dimension of size 64.
-#     lstm.add(Embedding(input_dim=dim_max, output_dim=64))
-    # Add a LSTM layer with 128 internal units.
-    # lstm.add(Masking(mask_value=-1., input_shape=(n_dims, n_weeks, n_features)))
-    # lstm.add(LSTM(128, input_shape=(n_weeks, look_back), return_sequences=True))
-    lstm.add(Bidirectional(LSTM(128)))
-
-    # Add a sigmoid Dense layer with 1 units.
-    lstm.add(Dense(1, activation='sigmoid'))
+    bilstm_input = Input(shape=(n_weeks, num_course_features), name="course_features")
+    meta_input = Input(shape=(num_meta_features), name="meta_features")
+    x = Bidirectional(LSTM(128))(bilstm_input)
+    x = BatchNormalization()(x)
+    meta = BatchNormalization()(meta_input)
+    att_meta = AdditiveAttention(use_scale=True,dropout=0.05, causal=True)([meta,meta])
+    meta = Concatenate(axis=1)([meta, att_meta])
+    x = project_embeddings(x, num_projection_layers, projection_dims, dropout_rate)
+    meta = project_embeddings(meta, num_projection_layers, projection_dims, dropout_rate)
+    x = Concatenate(axis=1)([x, meta])
+    att_x = AdditiveAttention(use_scale=True,dropout=0.05, causal=True)([x,x])    
+    x = Concatenate(axis=1)([x, att_x])
+    x = Dense(32, activation='sigmoid')(x)
+    x = Dense(32, activation='sigmoid')(x)
+    meta_output = Dense(1, activation='sigmoid')(x)
+    
+    model = Model([bilstm_input, meta_input], meta_output, name="bilstm_meta_128")
+    model.summary()
+   
     # compile the model
-    lstm.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+    model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
     
-    
-    checkpoint_filepath = 'checkpoints/lstm-bi-128-'+ experiment + current_timestamp
+    checkpoint_filepath = 'checkpoints/lstm-bi-128-'+ experiment + str(percentile) + current_timestamp
     os.mkdir(checkpoint_filepath)
     model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
         filepath=checkpoint_filepath,
         monitor='val_accuracy',
         mode='max',
         save_best_only=True)
+    
     # fit the model
-    history = lstm.fit(x_train, y_train, validation_data=(x_val, y_val), epochs=num_epochs, batch_size=64, verbose=1, callbacks=[model_checkpoint_callback])
-    lstm = tf.keras.models.load_model(checkpoint_filepath)
+    history = model.fit([x_train[:, :, num_meta_features:], x_train[:, 0, :num_meta_features]] , y_train, validation_data=([x_val[:, :, num_meta_features:], x_val[:, 0, :num_meta_features]], y_val), epochs=num_epochs, batch_size=64, verbose=1, callbacks=[model_checkpoint_callback])
+    model = tf.keras.models.load_model(checkpoint_filepath)
     # evaluate the model
-    y_pred = lstm.predict(x_test)
+    y_pred = model.predict([x_test[:, :, num_meta_features:], x_test[:, 0, :num_meta_features]])
     y_pred = [1 if y[0] >= 0.5 else 0 for y in y_pred]
     # evaluate the model
     model_params = {'model': 'LSTM-bi', 'epochs': num_epochs, 'batch_size': 64, 'loss': 'binary_cross_entropy'}
-    scores = evaluate(None, x_test, y_test, week_type, feature_types, course, y_pred=y_pred, model_name="TF-LSTM-bi-128" , model_params=model_params)
+    scores = evaluate(None, [x_test[:, :, num_meta_features:], x_test[:, 0, :num_meta_features]], y_test, week_type, feature_types, course, y_pred=y_pred, model_name=experiment + "TF-LSTM-bi-128", model_params=model_params)
 
-    y_val_pred = lstm.predict(x_val)
+    y_val_pred = model.predict([x_val[:, :, num_meta_features:], x_val[:, 0, :num_meta_features]])
     y_val_pred = [1 if y[0] >= 0.5 else 0 for y in y_val_pred]
-    val_scores = evaluate(None, x_val, y_val, week_type, feature_types, course, y_pred=y_val_pred, model_name="TF-LSTM-bi-128" , model_params=model_params)
-    lstm.save(checkpoint_filepath + experiment + '_final_e')
-    return history, scores, val_scores, lstm
+    val_scores = evaluate(None, [x_val[:, :, num_meta_features:], x_val[:, 0, :num_meta_features]], y_val, week_type, feature_types, course, y_pred=y_val_pred, model_name=experiment + "TF-LSTM-bi-128", model_params=model_params)
+    model.save(checkpoint_filepath + '_final_e')
+    return history, scores, val_scores, model
 
 def plot_history(history, file_name, counter):
     # plot loss during training
@@ -279,7 +311,7 @@ def predict_on_transfer(best_model, exp_type, percentile, name, desc_name):
     week_type = 'eq_week'
     feature_types = [ "lalle_conati", "boroujeni_et_al", "chen_cui", "marras_et_al"]
     courses = ['dsp_002', 'villesafricaines_001', 'structures_001', 'progfun_002', 'geomatique_003', 'venture_001']
-    metadata = pd.read_csv('new_data/metadata_augmented.csv')
+    metadata = pd.read_csv('metadata.csv')
     
     path = '../data/result/easy-fail/'
     experiment_scores = pd.DataFrame(columns=[ 'experiment_type','acc', 'bac','prec','rec','f1', 'auc', 'feature_type', 'week_type', 'course', 'model_name','data_balance', 'timestamp', 'percentile'])    
@@ -329,10 +361,10 @@ def predict_on_transfer(best_model, exp_type, percentile, name, desc_name):
         
         meta_features = np.concatenate([adding_info_about_course, meta_features], axis=2)
         print(meta_features.shape)
-        if exp_type == 'baseline':
-            features = course_features
-        else:
-            features = meta_features
+        num_course_features = 45
+        num_meta_features = meta_features.shape[2] - num_course_features
+
+        features = [meta_features[:,:,num_meta_features:], meta_features[:, 0, :num_meta_features]]
 
         scores1 = evaluate(best_model, features, labels, week_type, feature_types, course, y_pred=None, model_name=name)
         scores1['experiment_type'] = exp_type
@@ -344,20 +376,12 @@ def predict_on_transfer(best_model, exp_type, percentile, name, desc_name):
 
 rnn_mode = True
 path = '../data/result/easy-fail/'
-exp_type = 'add_info_title30_sdesc30_fasttext'
-title_size = 30
-desc_size = 30
-desc_name = 'short_description'
 week_type = 'eq_week'
 feature_types = [ "lalle_conati", "boroujeni_et_al", "chen_cui", "marras_et_al"]
 courses = ['analysenumerique_001', 'analysenumerique_002', 'analysenumerique_003', 'cpp_fr_001', 'dsp_001', 'dsp_004', 'dsp_005', 'dsp_006','hwts_001', 'hwts_002','initprogcpp_001', 'microcontroleurs_003', 'microcontroleurs_004', 'microcontroleurs_005', 'microcontroleurs_006', 'progfun_003', 'structures_002', 'structures_003', 'villesafricaines_002', 'villesafricaines_003']
-# courses = ['analysenumerique_001', 'analysenumerique_002', 'analysenumerique_003', 'cpp_fr_001', 'dsp_001', 'dsp_004', 'dsp_005', 'dsp_006', 'initprogcpp_001', 'initprogjava_001', 'microcontroleurs_003', 'microcontroleurs_004', 'microcontroleurs_005', 'microcontroleurs_006', 'hwts_001', 'villesafricaines_001', 'villesafricaines_002', 'villesafricaines_003']
-# courses = ['progfun_002', 'progfun_003', 'progfun_004']
-    # # of layers: [(64, 32), (128, 64, 32), (128, 64), (128, 128, 64, 32), (256, 128, 64)]
-# rnn_models = [bidirectional_lstm_128_128_64_32, bidirectional_lstm_256_128_64, bidirectional_lstm_128, bidirectional_lstm_32_32]
 rnn_models = [bidirectional_lstm_32, bidirectional_lstm_32_32, bidirectional_lstm_64, bidirectional_lstm_128]
-
-experiment = exp_type
+experiment = 'jan25_noproj_final_arch_meta_32_32_t60_ldesc60'
+exp_type = experiment
 save_name = 'run_history/' + experiment + '_20' + week_type + '_bilstm'
 save_stats = save_name + ".csv"
 save_val_stats = save_name + "val.csv"
@@ -371,9 +395,12 @@ experiment_scores = pd.DataFrame(columns=['acc', 'bac','prec','rec','f1', 'auc',
 val_exp_scores = pd.DataFrame(columns=['acc', 'bac','prec','rec','f1', 'auc', 'feature_type', 'week_type', 'course', 'model_name','data_balance', 'timestamp', 'percentile'])
 transfer_experiment_scores = pd.DataFrame(columns=[ 'experiment_type','experiment','acc', 'bac','prec','rec','f1', 'auc', 'feature_type', 'week_type', 'course', 'model_name','data_balance', 'timestamp', 'percentile'])
 
+title_size = 60
+desc_size = 60
+desc_name = 'long_description'
 metadata = pd.read_csv('new_data/metadata_augmented.csv')
 meta_model = load_meta_model(list(metadata['title']), title_size)
-desc_meta_model = load_meta_model(list(metadata['short_description']), desc_size)
+desc_meta_model = load_meta_model(list(metadata[desc_name]), desc_size)
 early_predict = [0.4, 0.6]
 epochs = 100
 
@@ -394,7 +421,7 @@ for percentile in early_predict:
         for feature_type in feature_types:
             filepath = path + week_type + '-' + feature_type + '-' + course
             print(filepath)
-
+    
             feature_current = np.load(filepath+'/feature_values.npz')['feature_values']
             feature_current = np.nan_to_num(feature_current, nan=-1)
             feature_current = feature_current[:, :num_weeks, :]
@@ -406,12 +433,13 @@ for percentile in early_predict:
             else:
                 feature_current = feature_current.reshape(labels.shape[0], -1)
                 feature_current = normalize(feature_current)
-            
+            print(feature_current.shape)
+            print(feature_type)
             feature_list.append(feature_current)
 
         course_features = np.concatenate(feature_list, axis=2)
         print(course_features.shape)
-
+        
         # add meta_features
         title = list(metadata[metadata['course_id'] == course.replace('_', '-')]['title'])[0]
         meta_title = meta_feature(title, meta_model)
@@ -447,7 +475,7 @@ for percentile in early_predict:
         y_train.append(y_train_c)
         y_test.append(y_test_c)
         y_val.append(y_val_c)
-
+        
         print('course: ', course)
         print('week_type: ', week_type)
         print('feature_type: ', feature_types)
@@ -458,8 +486,6 @@ for percentile in early_predict:
 
     x_train, x_test, x_val = np.concatenate(x_train), np.concatenate(x_test), np.concatenate(x_val)
     y_train, y_test, y_val = np.concatenate(y_train), np.concatenate(y_test), np.concatenate(y_val)
-    
-    print(x_train.shape)
 
     best_models = []
     for model in rnn_models:
@@ -470,11 +496,12 @@ for percentile in early_predict:
         val_exp_scores.loc[counter] = val_scores
         counter += 1
 
-        run_name = experiment + model.__name__  + "_ep" + str(percentile) + "_" + current_timestamp
+        run_name = exp_type + model.__name__  + "_ep" + str(percentile) + "_" + current_timestamp
 
         plot_history(history, 'run_history/' + run_name, counter)
         numpy_loss_history = np.array(history.history['loss'])
         np.savetxt('run_history/' + run_name + "_loss_history.txt", numpy_loss_history, delimiter=",")
+       
         experiment_scores.to_csv(save_stats)
         val_exp_scores.to_csv(save_val_stats)
         
@@ -489,5 +516,6 @@ val_exp_scores.to_csv(save_val_stats)
 print(experiment_scores)
 
 transfer_experiment_scores.to_csv(save_name + "_transfer_results.csv")
+
 
 

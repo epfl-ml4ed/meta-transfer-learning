@@ -37,7 +37,7 @@ def evaluate(model, x_test, y_test, week_type, feature_type, course, percentile=
 
     return scores
 
-def bidirectional_lstm_64(x_train, y_train, x_test, y_test, x_val, y_val, week_type, feature_types, course, current_timestamp, num_epochs=10):
+def bidirectional_lstm_64(x_train, y_train, x_test, y_test, x_val, y_val, week_type, feature_types, course, percentile, current_timestamp, num_epochs=10):
     dim_max = int(np.max(x_train[:, :]) + 1)
     n_dims = x_train.shape[0]
     n_weeks = x_train.shape[1]
@@ -69,15 +69,15 @@ def bidirectional_lstm_64(x_train, y_train, x_test, y_test, x_val, y_val, week_t
     y_pred = [1 if y[0] >= 0.5 else 0 for y in y_pred]
     # evaluate the model
     model_params = {'model': 'LSTM-bi', 'epochs': num_epochs, 'batch_size': 64, 'loss': 'binary_cross_entropy'}
-    scores = evaluate(None, x_test, y_test, week_type, feature_types, course, y_pred=y_pred, model_name="TF-LSTM-bi-64" , model_params=model_params)
+    scores = evaluate(None, x_test, y_test, week_type, feature_types, course, percentile, current_timestamp, y_pred=y_pred, model_name="TF-LSTM-bi-64" , model_params=model_params)
 
     y_val_pred = lstm.predict(x_val)
     y_val_pred = [1 if y[0] >= 0.5 else 0 for y in y_val_pred]
-    val_scores = evaluate(None, x_val, y_val, week_type, feature_types, course, y_pred=y_val_pred, model_name="TF-LSTM-bi-64" , model_params=model_params)
+    val_scores = evaluate(None, x_val, y_val, week_type, feature_types, course, percentile, current_timestamp, y_pred=y_val_pred, model_name="TF-LSTM-bi-64" , model_params=model_params)
     lstm.save(checkpoint_filepath + '_final_e')
     return history, scores, val_scores, lstm
 
-def bidirectional_lstm_32_32(x_train, y_train, x_test, y_test, x_val, y_val, week_type, feature_types, course, current_timestamp, num_epochs=10):
+def bidirectional_lstm_32_32(x_train, y_train, x_test, y_test, x_val, y_val, week_type, feature_types, course, percentile, current_timestamp, num_epochs=10):
     n_dims = x_train.shape[0]
     n_weeks = x_train.shape[1]
     n_features = x_train.shape[2]
@@ -108,15 +108,15 @@ def bidirectional_lstm_32_32(x_train, y_train, x_test, y_test, x_val, y_val, wee
     y_pred = [1 if y[0] >= 0.5 else 0 for y in y_pred]
     # evaluate the model
     model_params = {'model': 'LSTM-bi', 'epochs': num_epochs, 'batch_size': 64, 'loss': 'binary_cross_entropy'}
-    scores = evaluate(None, x_test, y_test, week_type, feature_types, course, y_pred=y_pred, model_name="TF-LSTM-bi-32-32" , model_params=model_params)
+    scores = evaluate(None, x_test, y_test, week_type, feature_types, course, percentile, current_timestamp, y_pred=y_pred, model_name="TF-LSTM-bi-32-32" , model_params=model_params)
 
     y_val_pred = lstm.predict(x_val)
     y_val_pred = [1 if y[0] >= 0.5 else 0 for y in y_val_pred]
-    val_scores = evaluate(None, x_val, y_val, week_type, feature_types, course, y_pred=y_val_pred, model_name="TF-LSTM-bi-32-32" , model_params=model_params)
+    val_scores = evaluate(None, x_val, y_val, week_type, feature_types, course, percentile, current_timestamp, y_pred=y_val_pred, model_name="TF-LSTM-bi-32-32" , model_params=model_params)
     lstm.save(checkpoint_filepath + '_final_e')
     return history, scores, val_scores, lstm
 
-def bidirectional_lstm_32(x_train, y_train, x_test, y_test, x_val, y_val, week_type, feature_types, course, current_timestamp, num_epochs=10):
+def bidirectional_lstm_32(x_train, y_train, x_test, y_test, x_val, y_val, week_type, feature_types, course, percentile, current_timestamp, num_epochs=10):
     n_dims = x_train.shape[0]
     n_weeks = x_train.shape[1]
     n_features = x_train.shape[2]
@@ -146,16 +146,16 @@ def bidirectional_lstm_32(x_train, y_train, x_test, y_test, x_val, y_val, week_t
     y_pred = [1 if y[0] >= 0.5 else 0 for y in y_pred]
     # evaluate the model
     model_params = {'model': 'LSTM-bi', 'epochs': num_epochs, 'batch_size': 64, 'loss': 'binary_cross_entropy'}
-    scores = evaluate(None, x_test, y_test, week_type, feature_types, course, y_pred=y_pred, model_name="TF-LSTM-bi-32" , model_params=model_params)
+    scores = evaluate(None, x_test, y_test, week_type, feature_types, course, percentile, current_timestamp, y_pred=y_pred, model_name="TF-LSTM-bi-32" , model_params=model_params)
 
     y_val_pred = lstm.predict(x_val)
     y_val_pred = [1 if y[0] >= 0.5 else 0 for y in y_val_pred]
-    val_scores = evaluate(None, x_val, y_val, week_type, feature_types, course, y_pred=y_val_pred, model_name="TF-LSTM-bi-32" , model_params=model_params)
+    val_scores = evaluate(None, x_val, y_val, week_type, feature_types, course, percentile, current_timestamp, y_pred=y_val_pred, model_name="TF-LSTM-bi-32" , model_params=model_params)
     lstm.save(checkpoint_filepath + '_final_e')
     return history, scores, val_scores, lstm
 
 
-def bidirectional_lstm_128(x_train, y_train, x_test, y_test, x_val, y_val, week_type, feature_types, course, current_timestamp, num_epochs=10):
+def bidirectional_lstm_128(x_train, y_train, x_test, y_test, x_val, y_val, week_type, feature_types, course, percentile, current_timestamp, num_epochs=10):
     n_dims = x_train.shape[0]
     n_weeks = x_train.shape[1]
     n_features = x_train.shape[2]
@@ -185,11 +185,11 @@ def bidirectional_lstm_128(x_train, y_train, x_test, y_test, x_val, y_val, week_
     y_pred = [1 if y[0] >= 0.5 else 0 for y in y_pred]
     # evaluate the model
     model_params = {'model': 'LSTM-bi', 'epochs': num_epochs, 'batch_size': 64, 'loss': 'binary_cross_entropy'}
-    scores = evaluate(None, x_test, y_test, week_type, feature_types, course, y_pred=y_pred, model_name="TF-LSTM-bi-128" , model_params=model_params)
+    scores = evaluate(None, x_test, y_test, week_type, feature_types, course, percentile, current_timestamp, y_pred=y_pred, model_name="TF-LSTM-bi-128" , model_params=model_params)
 
     y_val_pred = lstm.predict(x_val)
     y_val_pred = [1 if y[0] >= 0.5 else 0 for y in y_val_pred]
-    val_scores = evaluate(None, x_val, y_val, week_type, feature_types, course, y_pred=y_val_pred, model_name="TF-LSTM-bi-128" , model_params=model_params)
+    val_scores = evaluate(None, x_val, y_val, week_type, feature_types, course, percentile, current_timestamp, y_pred=y_val_pred, model_name="TF-LSTM-bi-128" , model_params=model_params)
     lstm.save(checkpoint_filepath + '_final_e')
     return history, scores, val_scores, lstm
 
