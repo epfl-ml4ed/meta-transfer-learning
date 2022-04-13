@@ -1,19 +1,16 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# # Baseline Experiments
-# models: SVM, RandomForest, Logistic Regression, MLP, Simple 2 layer NN
-
-# In[59]:
+# Experiment: Train on one course, predict on one course
+# Author: vinitra
 
 
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-from math import floor, ceil
 import sklearn as sk
 from keras.models import Sequential
-from keras.layers import Activation, Dense, Embedding, LSTM, SimpleRNN, GRU, Masking, Bidirectional, Dropout, TimeDistributed
+from keras.layers import Dense, Masking, LSTM, Bidirectional
 
 from sklearn.metrics import balanced_accuracy_score, precision_score, recall_score, roc_auc_score, f1_score, accuracy_score
 from sklearn.model_selection import train_test_split
@@ -63,15 +60,8 @@ def bidirectional_lstm_64(x_train, y_train, x_test, y_test, x_val, y_val, week_t
     # LSTM
     # define model
     lstm = Sequential()
-    # Add an Embedding layer expecting input vocab of size 1000, and
-    # output embedding dimension of size 64.
-#     lstm.add(Embedding(input_dim=dim_max, output_dim=64))
-    # Add a LSTM layer with 128 internal units.
-    # lstm.add(Masking(mask_value=-1., input_shape=(n_dims, n_weeks, n_features)))
-    # lstm.add(LSTM(128, input_shape=(n_weeks, look_back), return_sequences=True))
+    lstm.add(Masking(mask_value=-1., input_shape=(n_dims, n_weeks, n_features)))
     lstm.add(Bidirectional(LSTM(64)))
-
-    # Add a sigmoid Dense layer with 1 units.
     lstm.add(Dense(1, activation='sigmoid'))
     # compile the model
     lstm.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
@@ -101,26 +91,16 @@ def bidirectional_lstm_64(x_train, y_train, x_test, y_test, x_val, y_val, week_t
     return history, scores, val_scores, lstm
 
 def bidirectional_lstm_32_32(x_train, y_train, x_test, y_test, x_val, y_val, week_type, feature_types, course, num_epochs=10):
-    dim_max = int(np.max(x_train[:, :]) + 1)
     n_dims = x_train.shape[0]
     n_weeks = x_train.shape[1]
     n_features = x_train.shape[2]
-    look_back = 3
     
     # LSTM
     # define model
     lstm = Sequential()
-    # Add an Embedding layer expecting input vocab of size 1000, and
-    # output embedding dimension of size 64.
-#     lstm.add(Embedding(input_dim=dim_max, output_dim=64))
-    # Add a LSTM layer with 128 internal units.
-    # lstm.add(Masking(mask_value=-1., input_shape=(n_dims, n_weeks, n_features)))
-    # lstm.add(LSTM(128, input_shape=(n_weeks, look_back), return_sequences=True))
+    lstm.add(Masking(mask_value=-1., input_shape=(n_dims, n_weeks, n_features)))
     lstm.add(Bidirectional(LSTM(32, return_sequences=True)))
     lstm.add(Bidirectional(LSTM(32)))
-
-
-    # Add a sigmoid Dense layer with 1 units.
     lstm.add(Dense(1, activation='sigmoid'))
     # compile the model
     lstm.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
@@ -150,24 +130,15 @@ def bidirectional_lstm_32_32(x_train, y_train, x_test, y_test, x_val, y_val, wee
     return history, scores, val_scores, lstm
 
 def bidirectional_lstm_32(x_train, y_train, x_test, y_test, x_val, y_val, week_type, feature_types, course, num_epochs=10):
-    dim_max = int(np.max(x_train[:, :]) + 1)
     n_dims = x_train.shape[0]
     n_weeks = x_train.shape[1]
     n_features = x_train.shape[2]
-    look_back = 3
     
     # LSTM
     # define model
     lstm = Sequential()
-    # Add an Embedding layer expecting input vocab of size 1000, and
-    # output embedding dimension of size 64.
-#     lstm.add(Embedding(input_dim=dim_max, output_dim=64))
-    # Add a LSTM layer with 128 internal units.
-    # lstm.add(Masking(mask_value=-1., input_shape=(n_dims, n_weeks, n_features)))
-    # lstm.add(LSTM(128, input_shape=(n_weeks, look_back), return_sequences=True))
+    lstm.add(Masking(mask_value=-1., input_shape=(n_dims, n_weeks, n_features)))
     lstm.add(Bidirectional(LSTM(32)))
-
-    # Add a sigmoid Dense layer with 1 units.
     lstm.add(Dense(1, activation='sigmoid'))
     # compile the model
     lstm.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
@@ -198,24 +169,15 @@ def bidirectional_lstm_32(x_train, y_train, x_test, y_test, x_val, y_val, week_t
 
 
 def bidirectional_lstm_128(x_train, y_train, x_test, y_test, x_val, y_val, week_type, feature_types, course, num_epochs=10):
-    dim_max = int(np.max(x_train[:, :]) + 1)
     n_dims = x_train.shape[0]
     n_weeks = x_train.shape[1]
     n_features = x_train.shape[2]
-    look_back = 3
     
     # LSTM
     # define model
     lstm = Sequential()
-    # Add an Embedding layer expecting input vocab of size 1000, and
-    # output embedding dimension of size 64.
-#     lstm.add(Embedding(input_dim=dim_max, output_dim=64))
-    # Add a LSTM layer with 128 internal units.
-    # lstm.add(Masking(mask_value=-1., input_shape=(n_dims, n_weeks, n_features)))
-    # lstm.add(LSTM(128, input_shape=(n_weeks, look_back), return_sequences=True))
+    lstm.add(Masking(mask_value=-1., input_shape=(n_dims, n_weeks, n_features)))
     lstm.add(Bidirectional(LSTM(128)))
-
-    # Add a sigmoid Dense layer with 1 units.
     lstm.add(Dense(1, activation='sigmoid'))
     # compile the model
     lstm.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
@@ -260,23 +222,11 @@ def plot_history(history, file_name, counter):
     pyplot.legend()
     pyplot.savefig(file_name + "_acc.png")
 
-def load_meta_model():
-    print('Loading meta model.')
-    module_url = "https://tfhub.dev/google/universal-sentence-encoder/4" 
-    model = hub.load(module_url)
-    print("module %s loaded" % module_url)
-    return model
-
-def meta_feature(course_name, meta_model):
-    encoded_course = meta_model([course_name]).numpy()
-    return encoded_course
-
 def predict_on_transfer(best_model, exp_type, percentile, name):
     week_type = 'eq_week'
     feature_types = [ "lalle_conati", "boroujeni_et_al", "chen_cui", "marras_et_al"]
-    courses = ['villesafricaines_001']
-#     courses = ['dsp_002', 'villesafricaines_001', 'structures_001', 'progfun_002', 'geomatique_003', 'venture_001']
-    metadata = pd.read_csv('new_data/metadata_augmented.csv')
+    courses = ['dsp_002', 'villesafricaines_001', 'structures_001', 'progfun_002', 'geomatique_003', 'venture_001']
+    metadata = pd.read_csv('new_data/metadata28.csv')
     
     path = '../data/result/easy-fail/'
     experiment_scores = pd.DataFrame(columns=[ 'experiment_type','acc', 'bac','prec','rec','f1', 'auc', 'feature_type', 'week_type', 'course', 'model_name','data_balance', 'timestamp', 'percentile'])    
@@ -302,7 +252,9 @@ def predict_on_transfer(best_model, exp_type, percentile, name):
             feature_list.append(feature_current)
         course_features = np.concatenate(feature_list, axis=2)
 
-        scores1 = evaluate(best_model, course_features, labels, week_type, feature_types, course, y_pred=None, model_name=name)
+        features = course_features
+
+        scores1 = evaluate(best_model, features, labels, week_type, feature_types, course, y_pred=None, model_name=name)
         scores1['experiment_type'] = exp_type
         experiment_scores.loc[counter] = scores1
 
@@ -312,17 +264,16 @@ def predict_on_transfer(best_model, exp_type, percentile, name):
 
 rnn_mode = True
 path = '../data/result/easy-fail/'
-exp_type = 'train_villeafr23_pred_villeafr1'
 week_type = 'eq_week'
 feature_types = [ "lalle_conati", "boroujeni_et_al", "chen_cui", "marras_et_al"]
-courses = ['villesafricaines_002', 'villesafricaines_003']
-# courses = ['analysenumerique_001', 'analysenumerique_002', 'analysenumerique_003', 'cpp_fr_001', 'dsp_001', 'dsp_004', 'dsp_005', 'dsp_006','hwts_001', 'hwts_002','initprogcpp_001', 'microcontroleurs_003', 'microcontroleurs_004', 'microcontroleurs_005', 'microcontroleurs_006', 'progfun_003', 'structures_002', 'structures_003', 'villesafricaines_002', 'villesafricaines_003']
-# courses = ['progfun_002', 'progfun_003', 'progfun_004']
-    # # of layers: [(64, 32), (128, 64, 32), (128, 64), (128, 128, 64, 32), (256, 128, 64)]
-# rnn_models = [bidirectional_lstm_128_128_64_32, bidirectional_lstm_256_128_64, bidirectional_lstm_128, bidirectional_lstm_32_32]
+courses = ['venture_001']
+# courses = ['dsp_002', 'villesafricaines_001', 'structures_001', 'progfun_002', 'geomatique_003', 'venture_001']
+
+course = courses[0]
+exp_type = 'baseline_' + course
 rnn_models = [bidirectional_lstm_32, bidirectional_lstm_32_32, bidirectional_lstm_64, bidirectional_lstm_128]
 
-save_name = 'run_history/' + exp_type + '_20_' + week_type + '_bilstm'
+save_name = 'run_history/' + course + '_baseline_model_' + week_type + '_bilstm'
 save_stats = save_name + ".csv"
 save_val_stats = save_name + "val.csv"
 
@@ -335,9 +286,8 @@ experiment_scores = pd.DataFrame(columns=['acc', 'bac','prec','rec','f1', 'auc',
 val_exp_scores = pd.DataFrame(columns=['acc', 'bac','prec','rec','f1', 'auc', 'feature_type', 'week_type', 'course', 'model_name','data_balance', 'timestamp', 'percentile'])
 transfer_experiment_scores = pd.DataFrame(columns=[ 'experiment_type','experiment','acc', 'bac','prec','rec','f1', 'auc', 'feature_type', 'week_type', 'course', 'model_name','data_balance', 'timestamp', 'percentile'])
 
-metadata = pd.read_csv('new_data/metadata_augmented.csv')
+metadata = pd.read_csv('metadata.csv')
 early_predict = [0.4, 0.6]
-meta_model = hub.KerasLayer('../universal-sentence-encoder_4')
 epochs = 100
 
 for percentile in early_predict:
@@ -357,7 +307,6 @@ for percentile in early_predict:
         for feature_type in feature_types:
             filepath = path + week_type + '-' + feature_type + '-' + course
             print(filepath)
-            # print(os.listdir('../featurized/old_experiments/'))
 
             feature_current = np.load(filepath+'/feature_values.npz')['feature_values']
             feature_current = np.nan_to_num(feature_current, nan=-1)
@@ -376,14 +325,6 @@ for percentile in early_predict:
         course_features = np.concatenate(feature_list, axis=2)
         print(course_features.shape)
 
-        if 'meta' in exp_type:
-            # add meta_features
-            adding_meta_each_week = np.repeat(meta_feature(course, meta_model)[:, np.newaxis, :], course_features.shape[1], axis=1).reshape((course_features.shape[1], 512))
-            adding_meta_each_week = np.repeat(adding_meta_each_week[np.newaxis, :, :], course_features.shape[0], axis=0)
-            print(adding_meta_each_week.shape)
-            course_features = np.concatenate([adding_meta_each_week, course_features], axis=2)
-            print(course_features.shape)
-
         print(course, total_weeks, num_weeks, course_features.shape, percentile)
         x_train_c, x_test_v_c, y_train_c, y_test_v_c = train_test_split(course_features, labels.values, test_size=test_size + val_size, random_state=0, stratify=labels)
         x_test_c, x_val_c, y_test_c, y_val_c = train_test_split(x_test_v_c, y_test_v_c, test_size=val_size, random_state=0, stratify=y_test_v_c)
@@ -400,25 +341,29 @@ for percentile in early_predict:
 
 
     # ### train-test split
-    # In[26]:
-
     x_train, x_test, x_val = np.concatenate(x_train), np.concatenate(x_test), np.concatenate(x_val)
     y_train, y_test, y_val = np.concatenate(y_train), np.concatenate(y_test), np.concatenate(y_val)
+    
+    print(x_train.shape)
 
     best_models = []
     for model in rnn_models:
         print(model.__name__)
         current_timestamp = str(time.time())[:-2]
+
+        # train model
         history, scores, val_scores, best_model = model(x_train, y_train, x_test, y_test, x_val, y_val, week_type, feature_types, course, num_epochs=epochs)
         experiment_scores.loc[counter] = scores
         val_exp_scores.loc[counter] = val_scores
         counter += 1
 
-        run_name = exp_type + model.__name__  + "_ep" + str(percentile) + "_" + current_timestamp
+        run_name = 'baseline_' + course + model.__name__  + "_ep" + str(percentile) + "_" + current_timestamp
 
         plot_history(history, 'run_history/' + run_name, counter)
         numpy_loss_history = np.array(history.history['loss'])
         np.savetxt('run_history/' + run_name + "_loss_history.txt", numpy_loss_history, delimiter=",")
+        
+        # save experimental scores
         experiment_scores.to_csv(save_stats)
         val_exp_scores.to_csv(save_val_stats)
         
