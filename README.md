@@ -1,13 +1,13 @@
 # meta-transfer-learning
 This repository is the official implementation of the L@S 2022 Paper entitled "Meta Transfer Learning for Early Success Prediction in MOOCs" written by [Vinitra Swamy](http://github.com/vinitra), [Mirko Marras](https://www.mirkomarras.com/), and [Tanja Käser](https://people.epfl.ch/tanja.kaeser/?lang=en).
 
-Experiments are located in `scripts/`, corresponding directly to the experiment codes mentioned in the paper. At the beginning of each script, the research question this experiment targets and a short description of the model the file generates is included. For more information about each experiment, please reference the paper directly. The best behavior-only (BO), behavior-time-meta (BTM), and behavior-static-meta (BSM) models that can be used to warm-start downstream predictions can be found in `models/`.
+Experiments are located in `scripts/`, corresponding directly to the experimental methodology mentioned in the paper. At the beginning of each script, you will find the research question this experiment targets and a short objective statement regarding the model the script generates. For more information about each experiment, please reference the paper directly. The best behavior-only (BO), behavior-time-meta (BTM), and behavior-static-meta (BSM) models for each early prediction setting (40% and 60%) can be found in `models/`. These models can be used to warm-start downstream student performance predictions for new or ongoing courses.
 
 ## Usage guide
 
 0. Install relevant dependencies with `pip install -r requirements.txt`.
 
-1. Extract relevant features sets (`BouroujeniEtAl`, `MarrasEtAl`, `LalleConati`, and `ChenCui`) through our lab's EDM 2021 contribution on [benchmarks for feature predictive power](https://github.com/epfl-ml4ed/flipped-classroom). Place the results of these feature extraction scripts in `data/` with the same folder structure as shown through the toy-course.
+1. Extract relevant features sets (`BouroujeniEtAl`, `MarrasEtAl`, `LalleConati`, and `ChenCui`) through our lab's EDM 2021 contribution on [benchmarks for feature predictive power](https://github.com/epfl-ml4ed/flipped-classroom). Place the results of these feature extraction scripts in `data/`. A toy course example of extracted features is included in the `data/` folder.
 
 2. Fill out the `data/metadata.csv` file with relevant meta information about your course(s). One example of course metadata is currently showcased in the file. This information is necessary for extracting the meta features in the BTM and BSM models.
 
