@@ -1,5 +1,5 @@
 # meta-transfer-learning
-This repository is the official implementation of the L@S 2022 Paper entitled "Meta Transfer Learning for Early Success Prediction in MOOCs" written by [Vinitra Swamy](http://github.com/vinitra), Mirko Marras, and Tanja Käser.
+This repository is the official implementation of the L@S 2022 Paper entitled "Meta Transfer Learning for Early Success Prediction in MOOCs" written by [Vinitra Swamy](http://github.com/vinitra), [Mirko Marras](https://www.mirkomarras.com/), and [Tanja Käser](https://people.epfl.ch/tanja.kaeser/?lang=en).
 
 Experiments are located in `scripts/`, corresponding directly to the experiment codes mentioned in the paper. At the beginning of each script, the research question this experiment targets and a short description of the model the file generates is included. For more information about each experiment, please reference the paper directly. The best behavior-only (BO), behavior-time-meta (BTM), and behavior-static-meta (BSM) models that can be used to warm-start downstream predictions can be found in `models/`.
 
