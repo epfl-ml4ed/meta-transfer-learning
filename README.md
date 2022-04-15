@@ -1,9 +1,17 @@
 # meta-transfer-learning
 This repository is the official implementation of the L@S 2022 Paper entitled "Meta Transfer Learning for Early Success Prediction in MOOCs" written by [Vinitra Swamy](http://github.com/vinitra), Mirko Marras, and Tanja Käser.
 
-Experiments are located in `scripts/`. Models can be found in `models/`.
+Experiments are located in `scripts/`, corresponding directly to the experiment codes mentioned in the paper. At the beginning of each script, the research question this experiment targets and a short description of the model the file generates is included. For more information about each experiment, please reference the paper directly. The best behavior-only (BO), behavior-time-meta (BTM), and behavior-static-meta (BSM) models that can be used to warm-start downstream predictions can be found in `models/`.
 
-Extract relevant features sets (`BouroujeniEtAl`, `MarrasEtAl`, `LalleConati`, and `ChenCui`) through our lab's EDM 2021 contribution on [benchmarks for feature predictive power](https://github.com/epfl-ml4ed/flipped-classroom).
+## Usage guide
+
+0. Install relevant dependencies with `pip install -r requirements.txt`.
+
+1. Extract relevant features sets (`BouroujeniEtAl`, `MarrasEtAl`, `LalleConati`, and `ChenCui`) through our lab's EDM 2021 contribution on [benchmarks for feature predictive power](https://github.com/epfl-ml4ed/flipped-classroom). Place the results of these feature extraction scripts in `data/` with the same folder structure as shown through the toy-course.
+
+2. Fill out the `data/metadata.csv` file with relevant meta information about your course(s). One example of course metadata is currently showcased in the file. This information is necessary for extracting the meta features in the BTM and BSM models.
+
+3. Run your desired experiment from `scripts/` by executing the script with Python 3.7 or higher.
 
 ## Contributing 
 
