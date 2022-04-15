@@ -37,7 +37,7 @@ def predict_on_transfer(best_model, exp_type, percentile, name):
     week_type = 'eq_week'
     feature_types = [ "lalle_conati", "boroujeni_et_al", "chen_cui", "marras_et_al"]
     courses = ['villesafricaines_001']
-    metadata = pd.read_csv('new_data/metadata_augmented.csv')
+    metadata = pd.read_csv('../data/metadata.csv')
     
     path = '../data/result/easy-fail/'
     experiment_scores = pd.DataFrame(columns=[ 'experiment_type','acc', 'bac','prec','rec','f1', 'auc', 'feature_type', 'week_type', 'course', 'model_name','data_balance', 'timestamp', 'percentile'])    
@@ -102,7 +102,7 @@ transfer_experiment_scores = pd.DataFrame(columns=[ 'experiment_type','experimen
 
 title_size = 30
 desc_size = 30
-metadata = pd.read_csv('new_data/metadata_augmented.csv')
+metadata = pd.read_csv('../data/metadata.csv')
 meta_model = load_meta_model(list(metadata['title']), title_size)
 desc_meta_model = load_meta_model(list(metadata['long_description']), desc_size)
 early_predict = [0.6]

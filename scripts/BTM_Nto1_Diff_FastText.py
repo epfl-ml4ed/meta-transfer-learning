@@ -32,7 +32,7 @@ def predict_on_transfer(best_model, exp_type, percentile, name):
     week_type = 'eq_week'
     feature_types = [ "lalle_conati", "boroujeni_et_al", "chen_cui", "marras_et_al"]
     courses = ['dsp_002', 'villesafricaines_001', 'structures_001', 'progfun_002', 'geomatique_003', 'venture_001']
-    metadata = pd.read_csv('new_data/metadata28.csv')
+    metadata = pd.read_csv('../data/metadata.csv')
     
     path = '../data/result/easy-fail/'
     experiment_scores = pd.DataFrame(columns=[ 'experiment_type','acc', 'bac','prec','rec','f1', 'auc', 'feature_type', 'week_type', 'course', 'model_name','data_balance', 'timestamp', 'percentile'])    
@@ -97,7 +97,7 @@ experiment_scores = pd.DataFrame(columns=['acc', 'bac','prec','rec','f1', 'auc',
 val_exp_scores = pd.DataFrame(columns=['acc', 'bac','prec','rec','f1', 'auc', 'feature_type', 'week_type', 'course', 'model_name','data_balance', 'timestamp', 'percentile'])
 transfer_experiment_scores = pd.DataFrame(columns=[ 'experiment_type','experiment','acc', 'bac','prec','rec','f1', 'auc', 'feature_type', 'week_type', 'course', 'model_name','data_balance', 'timestamp', 'percentile'])
 
-metadata = pd.read_csv('new_data/metadata28.csv')
+metadata = pd.read_csv('../data/metadata.csv')
 meta_model = load_meta_model(list(metadata['title']))
 early_predict = [0.4, 0.6]
 epochs = 100
