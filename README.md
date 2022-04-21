@@ -13,33 +13,41 @@ Experiments are located in `scripts/`, corresponding directly to the experimenta
 
 3. Run your desired experiment from `scripts/` by executing the script with Python 3.7 or higher.
 
+## Models
+These models predict pass/fail student performance prediction using 40% or 60% of the duration of a course (to simulate downstream intervention for an ongoing course).
+- `BO` - Behavior-Only: Models trained only using features about student behavior.
+- `BTM` - Behavior-Timewise-Meta: Models trained using behavior features and meta features, combined at each timestep and used together as model input.
+- `BSM` - Behavior-Static-Meta: Models trained using behavior and meta features, combined statically at different layers of the model with attention and projection.
+
+The best models of each architecture are showcased in the `models/` folder, and can be produced with the `BO_Nto1_Diff.py`, `BSM_Nto1_Diff.py`, and `BTM_Nto1_Diff.py` scripts respectively.
+
+![all3_2](https://user-images.githubusercontent.com/72170466/164512385-64c2abac-a41d-404f-b592-3d75dcb97f49.png)
+
 ## Scripts
-We extensively evaluate our models on a large data set including 26 MOOCs and 145,714 students in total. With our analyses, we target the following three research questions, addressed through scripts in this repository:
+We extensively evaluate our models on a large data set including 26 MOOCs and 145,714 students in total. With our analyses, we target the following three research questions, addressed through experiments in this repository:
 
 - **RQ 1: Can student behavior transfer across iterations of the same course and across different courses?**
-  - `BO_1to1.py`
-  - `BO_Nto1_Diff.py`
-  - `BO_Nto1_Same.py`
+  - `BO_1to1.py`: Train a model on one course's behavior features (behavior-only) and predicting on one course's behavior features.
+  - `BO_Nto1_Diff.py`: Train a model on N courses' behavior features (behavior-only) and predicting on one course's (or multiple held out courses') behavior features.
+  - `BO_Nto1_Same.py`: Train a model on behavior features (behavior-only) from previous iterations of a course and predict on behavior features from that course's current iteration.
 
 - **RQ 2: Is a meta learning model trained on a combination of behavior and course metadata information more transferable?**
-  - `BSM_Nto1_Diff.py`
-  - `BTM_Nto1_Diff.py`
+  - `BSM_Nto1_Diff.py`: Train a model on behavior and meta features from N courses, combined statically (with attention and projection), predict on one course (or multiple hold-out courses). This script produces the final architecture, using FastText encoding.
+  - `BTM_Nto1_Diff.py`: Train a model on behavior and meta features from N courses, combined at each timestep, predict on one course (or multiple hold-out courses). 
   - **Encoding experiments**: encoding the course title and description text using different encoders (FastText, SBert, USE).  
-    - `BTM_Nto1_Diff_FastText.py`
-    - `BTM_Nto1_Diff_SentenceBERT.py`
-    - `BTM_Nto1_Diff_UniversalSentEncoder.py`
+    - `BTM_Nto1_Diff_FastText.py`: Encode textual meta features with FastText, in a BTM model.
+    - `BTM_Nto1_Diff_SentenceBERT.py`: Encode textual meta features with SentenceBERT, in a BTM model.
+    - `BTM_Nto1_Diff_UniversalSentEncoder.py`: Encode textual meta features with SentenceBERT, in a BTM model.
 
 - **RQ 3: Can fine-tuning a combined model on past iterations of an unseen course lead to better transferable models?**
-  - `BO_Nto1_Diff_Finetune.py`
-  - `BO_NtoC_Diff_Finetune.py`
-  - `BSM_NtoC_Diff_Finetune.py`
-  - `BTM_NtoC_Diff_Finetune.py`
+  - `BO_Nto1_Diff_Finetune.py`: Finetune the model trained in `BO_Nto1_Diff.py` on one course.
+  - `BO_NtoC_Diff_Finetune.py`: Finetune the model trained in `BO_Nto1_Diff.py` on previous iterations of a course, predict on current iteration.
+  - `BSM_NtoC_Diff_Finetune.py`: Finetune the model trained in `BSM_Nto1_Diff.py` on previous iterations of a course, predict on current iteration.
+  - `BTM_NtoC_Diff_Finetune.py`: Finetune the model trained in `BTM_Nto1_Diff.py` on previous iterations of a course, predict on current iteration.
 
 - **Helper Utilities**
-  - `predict_on_all_students.py`: Evaluate a trained model on all students, not just the subset of hard students.
-  - `rnn_models.py`: Bi-LSTM model architectures used in BO experiments.
-
-## Models
+  - `predict_on_all_students.py`: Evaluate a trained model on all students, not just the subset of hard students. This code can produce the results showcased in Figure 4.
+  - `rnn_models.py`: Bi-LSTM model architectures used in BO and BTM experiments.
 
 ## Contributing 
 
