@@ -14,7 +14,8 @@ Experiments are located in `scripts/`, corresponding directly to the experimenta
 3. Run your desired experiment from `scripts/` by executing the script with Python 3.7 or higher.
 
 ## Models
-These models predict pass/fail student performance prediction using 40% or 60% of the duration of a course (to simulate downstream intervention for an ongoing course).
+We present three model architectures to predict early pass / fail student performance prediction. The features used as input to each of these models is truncated to 40% or 60% of the duration of a course, in order to simulate downstream intervention for an ongoing course.
+
 - **Behavior Only** (`BO`): Models trained only using features about student behavior.
 - **Behavior + Time-wise Meta** (`BTM`): Models trained using behavior features and meta features, combined at each timestep and used together as model input.
 - **Behavior + Static Meta** (`BSM`): Models trained using behavior and meta features, combined statically at different layers of the model with attention and projection.
@@ -31,7 +32,7 @@ predictions = model.predict(features)
 ```
 
 ## Scripts
-We extensively evaluate our models on a large data set including 26 MOOCs and 145,714 students in total. With our analyses, we target the following three research questions, addressed through experiments in this repository:
+We extensively evaluate our models on a large data set including 26 MOOCs and 145,714 students in total, with millions of student interactions. With our analyses, we target the following three research questions, addressed through experiments in this repository:
 
 - **RQ 1: Can student behavior transfer across iterations of the same course and across different courses?**
   - `BO_1to1.py`: Train a model on one course's behavior features (behavior-only) and predicting on one course's behavior features.
