@@ -19,6 +19,8 @@ These models predict pass/fail student performance prediction using 40% or 60% o
 - **Behavior-Timewise-Meta** (`BTM`): Models trained using behavior features and meta features, combined at each timestep and used together as model input.
 - **Behavior-Static-Meta** (`BSM`): Models trained using behavior and meta features, combined statically at different layers of the model with attention and projection.
 
+![all3](https://user-images.githubusercontent.com/72170466/164514087-fb49c213-8116-4ab6-9215-89d4b4ee052e.png)
+
 The best models of each architecture for the two early prediction levels (40% and 60%) are showcased in the `models/` folder, and can be produced with the `BO_Nto1_Diff.py`, `BSM_Nto1_Diff.py`, and `BTM_Nto1_Diff.py` scripts respectively.
 
 You can load a model and compute predictions with the following code snippet:
@@ -26,8 +28,6 @@ You can load a model and compute predictions with the following code snippet:
 model = tf.keras.models.load_model("../models/" + model)
 predictions = model.predict(features)
 ```
-
-![all3](https://user-images.githubusercontent.com/72170466/164514087-fb49c213-8116-4ab6-9215-89d4b4ee052e.png)
 
 ## Scripts
 We extensively evaluate our models on a large data set including 26 MOOCs and 145,714 students in total. With our analyses, we target the following three research questions, addressed through experiments in this repository:
