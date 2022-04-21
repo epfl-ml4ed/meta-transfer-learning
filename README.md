@@ -21,6 +21,12 @@ These models predict pass/fail student performance prediction using 40% or 60% o
 
 The best models of each architecture for the two early prediction levels (40% and 60%) are showcased in the `models/` folder, and can be produced with the `BO_Nto1_Diff.py`, `BSM_Nto1_Diff.py`, and `BTM_Nto1_Diff.py` scripts respectively.
 
+You can load a model and compute predictions with the following code snippet:
+```
+model = tf.keras.models.load_model("../models/" + model)
+predictions = model.predict(features)
+```
+
 ![all3](https://user-images.githubusercontent.com/72170466/164514087-fb49c213-8116-4ab6-9215-89d4b4ee052e.png)
 
 ## Scripts

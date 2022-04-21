@@ -179,12 +179,6 @@ test_size = 0.1
 val_size = 0.1
 num_epochs = 50
 
-# jan25_proj_final_arch_meta_32_32_t30_ldesc30TF-LSTM-bi-64 0.4
-# lstm-bi-64-jan25_proj_final_arch_meta_32_32_t30_ldesc300.41643072188.38263
-
-# jan25_proj_final_arch_meta_32_32_t60_ldesc30TF-LSTM-bi-128 0.6
-# lstm-bi-128-jan25_proj_final_arch_meta_32_32_t60_ldesc300.61643080572.55902
-
 counter = 0
 experiment_scores = pd.DataFrame(columns=['acc', 'bac','prec','rec','f1', 'auc', 'feature_type', 'week_type', 'course', 'model_name','data_balance', 'timestamp', 'percentile'])
 val_exp_scores = pd.DataFrame(columns=['acc', 'bac','prec','rec','f1', 'auc', 'feature_type', 'week_type', 'course', 'model_name','data_balance', 'timestamp', 'percentile'])
@@ -294,7 +288,7 @@ for percentile in early_predict:
             continue
         if "lstm-bi-64" in model and percentile == 0.6:
             continue
-        reconstructed_model = tf.keras.models.load_model("checkpoints/" + model)
+        reconstructed_model = tf.keras.models.load_model("../models/" + model)
 
         print("Number of layers in the base model: ", len(reconstructed_model.layers))
 
@@ -310,7 +304,7 @@ for percentile in early_predict:
               metrics=['accuracy'])
         
         # compile the model    
-        checkpoint_filepath = 'checkpoints/finetune-'+ experiment + current_timestamp
+        checkpoint_filepath = '../models/finetune-'+ experiment + current_timestamp
         os.mkdir(checkpoint_filepath)
         model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
             filepath=checkpoint_filepath,
