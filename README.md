@@ -26,8 +26,8 @@ The best models of each architecture for the two early prediction levels (40% an
 
 You can load a model and compute predictions (inference) with the following code snippet:
 ```
-model_path = "../models/" + "BO_Nto1_Diff_0.4_lstm-bi-64-baseline_best_bidirectional_lstm_64_ep0.4_1641513647.8297"
-model = tf.keras.models.load_model(model_path)
+pretrained_model = 'BO_Nto1_Diff_0.4_lstm-bi-64-baseline_best_bidirectional_lstm_64_ep0.4_1641513647.8297'
+model = tf.keras.models.load_model('../models/' + pretrained_model)
 predictions = model.predict(features)
 ```
 
