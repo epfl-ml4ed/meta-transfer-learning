@@ -13,6 +13,34 @@ Experiments are located in `scripts/`, corresponding directly to the experimenta
 
 3. Run your desired experiment from `scripts/` by executing the script with Python 3.7 or higher.
 
+## Scripts
+We extensively evaluate our models on a large data set including 26 MOOCs and 145,714 students in total. With our analyses, we target the following three research questions, addressed through scripts in this repository:
+
+- **RQ 1: Can student behavior transfer across iterations of the same course and across different courses?**
+  - `BO_1to1.py`
+  - `BO_Nto1_Diff.py`
+  - `BO_Nto1_Same.py`
+
+- **RQ 2: Is a meta learning model trained on a combination of behavior and course metadata information more transferable?**
+  - `BSM_Nto1_Diff.py`
+  - `BTM_Nto1_Diff.py`
+  - **Encoding experiments**: encoding the course title and description text using different encoders (FastText, SBert, USE).  
+    - `BTM_Nto1_Diff_FastText.py`
+    - `BTM_Nto1_Diff_SentenceBERT.py`
+    - `BTM_Nto1_Diff_UniversalSentEncoder.py`
+
+- **RQ 3: Can fine-tuning a combined model on past iterations of an unseen course lead to better transferable models?**
+  - `BO_Nto1_Diff_Finetune.py`
+  - `BO_NtoC_Diff_Finetune.py`
+  - `BSM_NtoC_Diff_Finetune.py`
+  - `BTM_NtoC_Diff_Finetune.py`
+
+- **Helper Utilities**
+  - `predict_on_all_students.py`: Evaluate a trained model on all students, not just the subset of hard students.
+  - `rnn_models.py`: Bi-LSTM model architectures used in BO experiments.
+
+## Models
+
 ## Contributing 
 
 This code is provided for educational purposes and aims to facilitate reproduction of our results, and further research 
