@@ -167,7 +167,7 @@ for percentile in early_predict:
 
     best_models = []
     for model in rnn_models:
-        reconstructed_model = tf.keras.models.load_model("checkpoints/" + model)
+        reconstructed_model = tf.keras.models.load_model("../models/" + model)
 
         print("Number of layers in the base model: ", len(reconstructed_model.layers))
 
