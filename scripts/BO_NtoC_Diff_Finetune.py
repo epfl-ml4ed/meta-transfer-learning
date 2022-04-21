@@ -226,16 +226,9 @@ for percentile in early_predict:
             continue
         if "lstm-bi-64" in model and percentile == 0.6:
             continue
-        reconstructed_model = tf.keras.models.load_model("checkpoints/" + model)
+        reconstructed_model = tf.keras.models.load_model("../models/" + model)
 
         print("Number of layers in the base model: ", len(reconstructed_model.layers))
-
-        # Fine-tune from this layer onwards
-        # fine_tune_at = floor(len(reconstructed_model.layers)/2)
-
-        # Freeze all the layers before the `fine_tune_at` layer
-        # for layer in reconstructed_model.layers[:fine_tune_at]:
-        #    layer.trainable = False
 
         for layer in reconstructed_model.layers:
             layer.trainable = True
@@ -249,7 +242,7 @@ for percentile in early_predict:
               metrics=['accuracy'])
         
         # compile the model    
-        checkpoint_filepath = 'checkpoints/finetune-'+ experiment + current_timestamp
+        checkpoint_filepath = '../models/finetune-'+ experiment + current_timestamp
         os.mkdir(checkpoint_filepath)
         model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
             filepath=checkpoint_filepath,
