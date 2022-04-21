@@ -15,13 +15,13 @@ Experiments are located in `scripts/`, corresponding directly to the experimenta
 
 ## Models
 These models predict pass/fail student performance prediction using 40% or 60% of the duration of a course (to simulate downstream intervention for an ongoing course).
-- `BO` - Behavior-Only: Models trained only using features about student behavior.
-- `BTM` - Behavior-Timewise-Meta: Models trained using behavior features and meta features, combined at each timestep and used together as model input.
-- `BSM` - Behavior-Static-Meta: Models trained using behavior and meta features, combined statically at different layers of the model with attention and projection.
+- **Behavior-Only** (`BO`): Models trained only using features about student behavior.
+- **Behavior-Timewise-Meta** (`BTM`): Models trained using behavior features and meta features, combined at each timestep and used together as model input.
+- **Behavior-Static-Meta** (`BSM`): Models trained using behavior and meta features, combined statically at different layers of the model with attention and projection.
 
 The best models of each architecture are showcased in the `models/` folder, and can be produced with the `BO_Nto1_Diff.py`, `BSM_Nto1_Diff.py`, and `BTM_Nto1_Diff.py` scripts respectively.
 
-![all3_2](https://user-images.githubusercontent.com/72170466/164512385-64c2abac-a41d-404f-b592-3d75dcb97f49.png)
+![all3](https://user-images.githubusercontent.com/72170466/164514087-fb49c213-8116-4ab6-9215-89d4b4ee052e.png)
 
 ## Scripts
 We extensively evaluate our models on a large data set including 26 MOOCs and 145,714 students in total. With our analyses, we target the following three research questions, addressed through experiments in this repository:
