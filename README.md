@@ -19,7 +19,7 @@ These models predict pass/fail student performance prediction using 40% or 60% o
 - **Behavior-Timewise-Meta** (`BTM`): Models trained using behavior features and meta features, combined at each timestep and used together as model input.
 - **Behavior-Static-Meta** (`BSM`): Models trained using behavior and meta features, combined statically at different layers of the model with attention and projection.
 
-The best models of each architecture are showcased in the `models/` folder, and can be produced with the `BO_Nto1_Diff.py`, `BSM_Nto1_Diff.py`, and `BTM_Nto1_Diff.py` scripts respectively.
+The best models of each architecture for the two early prediction levels (40% and 60%) are showcased in the `models/` folder, and can be produced with the `BO_Nto1_Diff.py`, `BSM_Nto1_Diff.py`, and `BTM_Nto1_Diff.py` scripts respectively.
 
 ![all3](https://user-images.githubusercontent.com/72170466/164514087-fb49c213-8116-4ab6-9215-89d4b4ee052e.png)
 
