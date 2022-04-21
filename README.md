@@ -1,7 +1,7 @@
 # meta-transfer-learning
 This repository is the official implementation of the L@S 2022 Paper entitled "Meta Transfer Learning for Early Success Prediction in MOOCs" written by [Vinitra Swamy](http://github.com/vinitra), [Mirko Marras](https://www.mirkomarras.com/), and [Tanja Käser](https://people.epfl.ch/tanja.kaeser/?lang=en).
 
-Experiments are located in `scripts/`, corresponding directly to the experimental methodology mentioned in the paper. At the beginning of each script, you will find the research question this experiment targets and a short objective statement regarding the model the script generates. For more information about each experiment, please reference the paper directly. The best behavior-only (BO), behavior-time-meta (BTM), and behavior-static-meta (BSM) models for each early prediction setting (40% and 60%) can be found in `models/`. These models can be used to warm-start downstream student performance predictions for new or ongoing courses.
+Experiments are located in `scripts/`, corresponding directly to the experimental methodology mentioned in the paper. At the beginning of each script, you will find the research question this experiment targets and a short objective statement regarding the model the script generates. For more information about each experiment, please reference the paper directly. The best behavior-only (`BO`), behavior-timewise-meta (`BTM`), and behavior-static-meta (`BSM`) models for each early prediction setting (40% and 60%) can be found in `models/`. These models can be used to warm-start downstream student performance predictions for new or ongoing courses.
 
 ## Usage guide
 
@@ -15,17 +15,18 @@ Experiments are located in `scripts/`, corresponding directly to the experimenta
 
 ## Models
 These models predict pass/fail student performance prediction using 40% or 60% of the duration of a course (to simulate downstream intervention for an ongoing course).
-- **Behavior-Only** (`BO`): Models trained only using features about student behavior.
-- **Behavior-Timewise-Meta** (`BTM`): Models trained using behavior features and meta features, combined at each timestep and used together as model input.
-- **Behavior-Static-Meta** (`BSM`): Models trained using behavior and meta features, combined statically at different layers of the model with attention and projection.
+- **Behavior Only** (`BO`): Models trained only using features about student behavior.
+- **Behavior + Time-wise Meta** (`BTM`): Models trained using behavior features and meta features, combined at each timestep and used together as model input.
+- **Behavior + Static Meta** (`BSM`): Models trained using behavior and meta features, combined statically at different layers of the model with attention and projection.
 
 ![all3](https://user-images.githubusercontent.com/72170466/164514087-fb49c213-8116-4ab6-9215-89d4b4ee052e.png)
 
 The best models of each architecture for the two early prediction levels (40% and 60%) are showcased in the `models/` folder, and can be produced with the `BO_Nto1_Diff.py`, `BSM_Nto1_Diff.py`, and `BTM_Nto1_Diff.py` scripts respectively.
 
-You can load a model and compute predictions with the following code snippet:
+You can load a model and compute predictions (inference) with the following code snippet:
 ```
-model = tf.keras.models.load_model("../models/" + model)
+model_path = "../models/" + "BO_Nto1_Diff_0.4_lstm-bi-64-baseline_best_bidirectional_lstm_64_ep0.4_1641513647.8297"
+model = tf.keras.models.load_model(model_path)
 predictions = model.predict(features)
 ```
 
