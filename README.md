@@ -1,7 +1,9 @@
 # meta-transfer-learning
 This repository is the official implementation of the L@S 2022 Paper entitled "Meta Transfer Learning for Early Success Prediction in MOOCs" written by [Vinitra Swamy](http://github.com/vinitra), [Mirko Marras](https://www.mirkomarras.com/), and [Tanja Käser](https://people.epfl.ch/tanja.kaeser/?lang=en).
 
-Experiments are located in `scripts/`, corresponding directly to the experimental methodology mentioned in the paper. At the beginning of each script, you will find the research question this experiment targets and a short objective statement regarding the model the script generates. For more information about each experiment, please reference the paper directly. The best behavior-only (`BO`), behavior-timewise-meta (`BTM`), and behavior-static-meta (`BSM`) models for each early prediction setting (40% and 60%) can be found in `models/`. These models can be used to warm-start downstream student performance predictions for new or ongoing courses.
+Experiments are located in `scripts/`, corresponding directly to the experimental methodology mentioned in the paper. At the beginning of each script, you will find the research question this experiment targets and a short objective statement regarding the model the script generates. For more information about each experiment, please reference the paper directly. 
+
+The best behavior-only (`BO`), behavior-timewise-meta (`BTM`), and behavior-static-meta (`BSM`) models for each early prediction setting (40% and 60%) can be found in `models/`. These models can be used to warm-start downstream student performance predictions for new or ongoing courses.
 
 ## Usage guide
 
@@ -42,7 +44,7 @@ We extensively evaluate our models on a large data set including 26 MOOCs and 14
 - **RQ 2: Is a meta learning model trained on a combination of behavior and course metadata information more transferable?**
   - `BSM_Nto1_Diff.py`: Train a model on behavior and meta features from N courses, combined statically (with attention and projection), predict on one course (or multiple hold-out courses). This script produces the final architecture, using FastText encoding.
   - `BTM_Nto1_Diff.py`: Train a model on behavior and meta features from N courses, combined at each timestep, predict on one course (or multiple hold-out courses). 
-  - **Encoding experiments**: encoding the course title and description text using different encoders (FastText, SBert, USE).  
+  - **Encoding experiments**: encoding the course title and description text using different encoders.  
     - `BTM_Nto1_Diff_FastText.py`: Encode textual meta features with FastText, in a BTM model.
     - `BTM_Nto1_Diff_SentenceBERT.py`: Encode textual meta features with SentenceBERT, in a BTM model.
     - `BTM_Nto1_Diff_UniversalSentEncoder.py`: Encode textual meta features with SentenceBERT, in a BTM model.
