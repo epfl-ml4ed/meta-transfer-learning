@@ -1,7 +1,9 @@
 # meta-transfer-learning
 This repository is the official implementation of the L@S 2022 Paper entitled "Meta Transfer Learning for Early Success Prediction in MOOCs" written by [Vinitra Swamy](http://github.com/vinitra), [Mirko Marras](https://www.mirkomarras.com/), and [Tanja Käser](https://people.epfl.ch/tanja.kaeser/?lang=en).
 
-Experiments are located in `scripts/`, corresponding directly to the experimental methodology mentioned in the paper. At the beginning of each script, you will find the research question this experiment targets and a short objective statement regarding the model the script generates. For more information about each experiment, please reference the paper directly. The best behavior-only (BO), behavior-time-meta (BTM), and behavior-static-meta (BSM) models for each early prediction setting (40% and 60%) can be found in `models/`. These models can be used to warm-start downstream student performance predictions for new or ongoing courses.
+Experiments are located in `scripts/`, corresponding directly to the experimental methodology mentioned in the paper. At the beginning of each script, you will find the research question this experiment targets and a short objective statement regarding the model the script generates. For more information about each experiment, please reference the paper directly. 
+
+The best behavior-only (`BO`), behavior-timewise-meta (`BTM`), and behavior-static-meta (`BSM`) models for each early prediction setting (40% and 60%) can be found in `models/`. These models can be used to warm-start downstream student performance predictions for new or ongoing courses.
 
 ## Usage guide
 
@@ -14,23 +16,25 @@ Experiments are located in `scripts/`, corresponding directly to the experimenta
 3. Run your desired experiment from `scripts/` by executing the script with Python 3.7 or higher.
 
 ## Models
-These models predict pass/fail student performance prediction using 40% or 60% of the duration of a course (to simulate downstream intervention for an ongoing course).
-- **Behavior-Only** (`BO`): Models trained only using features about student behavior.
-- **Behavior-Timewise-Meta** (`BTM`): Models trained using behavior features and meta features, combined at each timestep and used together as model input.
-- **Behavior-Static-Meta** (`BSM`): Models trained using behavior and meta features, combined statically at different layers of the model with attention and projection.
+We present three model architectures to predict early pass / fail student performance prediction. The features used as input to each of these models is truncated to 40% or 60% of the duration of a course, in order to simulate downstream intervention for an ongoing course.
+
+- **Behavior Only** (`BO`): Models trained only using features about student behavior.
+- **Behavior + Time-wise Meta** (`BTM`): Models trained using behavior features and meta features, combined at each timestep and used together as model input.
+- **Behavior + Static Meta** (`BSM`): Models trained using behavior and meta features, combined statically at different layers of the model with attention and projection.
 
 ![all3](https://user-images.githubusercontent.com/72170466/164514087-fb49c213-8116-4ab6-9215-89d4b4ee052e.png)
 
 The best models of each architecture for the two early prediction levels (40% and 60%) are showcased in the `models/` folder, and can be produced with the `BO_Nto1_Diff.py`, `BSM_Nto1_Diff.py`, and `BTM_Nto1_Diff.py` scripts respectively.
 
-You can load a model and compute predictions with the following code snippet:
+You can load a model and compute predictions (inference) with the following code snippet:
 ```
-model = tf.keras.models.load_model("../models/" + model)
+pretrained_model = 'BO_Nto1_Diff_0.4_lstm-bi-64-baseline_best_bidirectional_lstm_64_ep0.4_1641513647.8297'
+model = tf.keras.models.load_model('../models/' + pretrained_model)
 predictions = model.predict(features)
 ```
 
 ## Scripts
-We extensively evaluate our models on a large data set including 26 MOOCs and 145,714 students in total. With our analyses, we target the following three research questions, addressed through experiments in this repository:
+We extensively evaluate our models on a large data set including 26 MOOCs and 145,714 students in total, with millions of student interactions. With our analyses, we target the following three research questions, addressed through experiments in this repository:
 
 - **RQ 1: Can student behavior transfer across iterations of the same course and across different courses?**
   - `BO_1to1.py`: Train a model on one course's behavior features (behavior-only) and predicting on one course's behavior features.
@@ -40,7 +44,7 @@ We extensively evaluate our models on a large data set including 26 MOOCs and 14
 - **RQ 2: Is a meta learning model trained on a combination of behavior and course metadata information more transferable?**
   - `BSM_Nto1_Diff.py`: Train a model on behavior and meta features from N courses, combined statically (with attention and projection), predict on one course (or multiple hold-out courses). This script produces the final architecture, using FastText encoding.
   - `BTM_Nto1_Diff.py`: Train a model on behavior and meta features from N courses, combined at each timestep, predict on one course (or multiple hold-out courses). 
-  - **Encoding experiments**: encoding the course title and description text using different encoders (FastText, SBert, USE).  
+  - **Encoding experiments**: encoding the course title and description text using different encoders.  
     - `BTM_Nto1_Diff_FastText.py`: Encode textual meta features with FastText, in a BTM model.
     - `BTM_Nto1_Diff_SentenceBERT.py`: Encode textual meta features with SentenceBERT, in a BTM model.
     - `BTM_Nto1_Diff_UniversalSentEncoder.py`: Encode textual meta features with SentenceBERT, in a BTM model.
