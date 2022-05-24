@@ -1,4 +1,4 @@
-# meta-transfer-learning
+# Meta Transfer Learning for Early Success Prediction in MOOCs
 This repository is the official implementation of the L@S 2022 Paper entitled "Meta Transfer Learning for Early Success Prediction in MOOCs" written by [Vinitra Swamy](http://github.com/vinitra), [Mirko Marras](https://www.mirkomarras.com/), and [Tanja Käser](https://people.epfl.ch/tanja.kaeser/?lang=en).
 
 Experiments are located in `scripts/`, corresponding directly to the experimental methodology mentioned in the paper. At the beginning of each script, you will find the research question this experiment targets and a short objective statement regarding the model the script generates. For more information about each experiment, please reference the paper directly. 
