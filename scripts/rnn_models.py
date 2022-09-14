@@ -9,7 +9,7 @@ from sklearn.metrics import balanced_accuracy_score, precision_score, recall_sco
 import os.path
 import matplotlib.pyplot as pyplot
 
-def evaluate(model, x_test, y_test, week_type, feature_type, course, percentile=0.4, current_timestamp=0, model_name=None, y_pred=None):
+def evaluate(model, x_test, y_test, week_type, feature_type, course, percentile=0.4, current_timestamp=0, model_name=None, y_pred=None, model_params = None):
     scores={}
     if y_pred is None:
         y_pred = model.predict(x_test)
@@ -47,7 +47,7 @@ def bidirectional_lstm_64(x_train, y_train, x_test, y_test, x_val, y_val, week_t
     # LSTM
     # define model
     lstm = Sequential()
-    lstm.add(Masking(mask_value=-1., input_shape=(n_dims, n_weeks, n_features)))
+    lstm.add(Masking(mask_value=-1., input_shape=(n_weeks, n_features)))
     lstm.add(Bidirectional(LSTM(64)))
     lstm.add(Dense(1, activation='sigmoid'))
     # compile the model
@@ -85,7 +85,7 @@ def bidirectional_lstm_32_32(x_train, y_train, x_test, y_test, x_val, y_val, wee
     # LSTM
     # define model
     lstm = Sequential()
-    lstm.add(Masking(mask_value=-1., input_shape=(n_dims, n_weeks, n_features)))
+    lstm.add(Masking(mask_value=-1., input_shape=(n_weeks, n_features)))
     lstm.add(Bidirectional(LSTM(32, return_sequences=True)))
     lstm.add(Bidirectional(LSTM(32)))
     lstm.add(Dense(1, activation='sigmoid'))
@@ -116,6 +116,45 @@ def bidirectional_lstm_32_32(x_train, y_train, x_test, y_test, x_val, y_val, wee
     lstm.save(checkpoint_filepath + '_final_e')
     return history, scores, val_scores, lstm
 
+def bidirectional_lstm_32_64(x_train, y_train, x_test, y_test, x_val, y_val, week_type, feature_types, course, percentile, current_timestamp, num_epochs=10):
+    n_dims = x_train.shape[0]
+    n_weeks = x_train.shape[1]
+    n_features = x_train.shape[2]
+    
+    # LSTM
+    # define model
+    lstm = Sequential()
+    lstm.add(Masking(mask_value=-1., input_shape=(n_weeks, n_features)))
+    lstm.add(Bidirectional(LSTM(32, return_sequences=True)))
+    lstm.add(Bidirectional(LSTM(64)))
+    lstm.add(Dense(1, activation='sigmoid'))
+    # compile the model
+    lstm.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
+    
+    checkpoint_filepath = 'checkpoints/lstm-bi-32-64-' + current_timestamp
+
+    os.mkdir(checkpoint_filepath)
+    model_checkpoint_callback = tf.keras.callbacks.ModelCheckpoint(
+        filepath=checkpoint_filepath,
+        monitor='val_accuracy',
+        mode='max',
+        save_best_only=True)
+    # fit the model
+    history = lstm.fit(x_train, y_train, validation_data=(x_val, y_val), epochs=num_epochs, batch_size=64, verbose=1, callbacks=[model_checkpoint_callback])
+    lstm = tf.keras.models.load_model(checkpoint_filepath)
+    # evaluate the model
+    y_pred = lstm.predict(x_test)
+    y_pred = [1 if y[0] >= 0.5 else 0 for y in y_pred]
+    # evaluate the model
+    model_params = {'model': 'LSTM-bi', 'epochs': num_epochs, 'batch_size': 64, 'loss': 'binary_cross_entropy'}
+    scores = evaluate(None, x_test, y_test, week_type, feature_types, course, percentile, current_timestamp, y_pred=y_pred, model_name="TF-LSTM-bi-32-64" , model_params=model_params)
+
+    y_val_pred = lstm.predict(x_val)
+    y_val_pred = [1 if y[0] >= 0.5 else 0 for y in y_val_pred]
+    val_scores = evaluate(None, x_val, y_val, week_type, feature_types, course, percentile, current_timestamp, y_pred=y_val_pred, model_name="TF-LSTM-bi-32-64" , model_params=model_params)
+    lstm.save(checkpoint_filepath + '_final_e')
+    return history, scores, val_scores, lstm
+
 def bidirectional_lstm_32(x_train, y_train, x_test, y_test, x_val, y_val, week_type, feature_types, course, percentile, current_timestamp, num_epochs=10):
     n_dims = x_train.shape[0]
     n_weeks = x_train.shape[1]
@@ -124,7 +163,7 @@ def bidirectional_lstm_32(x_train, y_train, x_test, y_test, x_val, y_val, week_t
     # LSTM
     # define model
     lstm = Sequential()
-    lstm.add(Masking(mask_value=-1., input_shape=(n_dims, n_weeks, n_features)))
+    lstm.add(Masking(mask_value=-1., input_shape=(n_weeks, n_features)))
     lstm.add(Bidirectional(LSTM(32)))
     lstm.add(Dense(1, activation='sigmoid'))
     # compile the model
@@ -163,7 +202,7 @@ def bidirectional_lstm_128(x_train, y_train, x_test, y_test, x_val, y_val, week_
     # LSTM
     # define model
     lstm = Sequential()
-    lstm.add(Masking(mask_value=-1., input_shape=(n_dims, n_weeks, n_features)))
+    lstm.add(Masking(mask_value=-1., input_shape=(n_weeks, n_features)))
     lstm.add(Bidirectional(LSTM(128)))
     lstm.add(Dense(1, activation='sigmoid'))
     # compile the model
